@@ -61,13 +61,13 @@ class C_vocables:
 class GUI_control:
     def __init__(self):
         self.root = tk.Tk(className=" Nehls'scher Vokabeltrainer")
-        self.canvas = tk.Canvas(self.root, height=460, width=700)
+        self.canvas = tk.Canvas(self.root, height=500, width=800)
         self.canvas.pack()
         self.frame=[]
         self.frame.append(tk.Frame(self.root))
-        self.frame[0].place(relwidth=0.5, height=300) #spanish side
+        self.frame[0].place(relwidth=0.5, height=300)
         self.frame.append(tk.Frame(self.root))
-        self.frame[1].place(relwidth=0.5, height=300, relx=0.5) #german side
+        self.frame[1].place(relwidth=0.5, height=300, relx=0.5)
         self.frameButtons = tk.Frame(self.root)
         self.frameButtons.place(relwidth = 1, height = 160, rely = 300/(300+160))
         self.ET_Answer=[]
@@ -109,6 +109,15 @@ class GUI_control:
                                               command=self.Buttonfunc_Beisizer_partcorrect).grid(row=3, column = 1)
                 tk.Button(self.frameButtons, text="Falsch", font=self.fontLayout, width=width, height = height,
                                               command=self.Buttonfunc_Beisizer_wrong).grid(row=4, column = 1)
+            tk.Label(self.frameButtons, text="Eingabe rückgängig machen:", font=self.fontLayout).grid(row=1, column=3)
+            self.Button_RemoveUserEntry = tk.Button(self.frameButtons, text="Vertippt (" + self.user + ")",
+                                                    font=self.fontLayout, width=width, height=height,
+                                                    command=self.Buttonfunc_RemoveUserEntry)
+            self.Button_RemoveUserEntry.grid(row=2, column=3)
+            self.Button_RemoveUser2Entry = tk.Button(self.frameButtons, text="Verklickt (" + self.user2 + ")",
+                                                    font=self.fontLayout, width=width, height=height,
+                                                    command=self.Buttonfunc_RemoveUser2Entry)
+            self.Button_RemoveUser2Entry.grid(row=3, column=3)
         elif self.ButtonLayout == 1:
             self.CheckVocable = tk.Button(MyGUI.frameButtons, text="Eingabe prüfen", font=self.fontLayout,
                                           command=MyGUI.Buttonfunc_CheckEntry)
@@ -152,6 +161,17 @@ class GUI_control:
             tk.Button(self.frameButtons, text="Speichern & Beenden", font=self.fontLayout, width=width, height = height,
                                           command=self.Buttonfunc_Save_Exit).grid(row = 4, column = 2)
 
+    def Buttonfunc_RemoveUserEntry(self):
+        if vocables.vocables[Selector.idx]["answers"][-1]["user"] == self.user:
+            del vocables.vocables[Selector.idx]["answers"][-1]
+        elif len(vocables.vocables[Selector.idx]["answers"])>1:
+            if vocables.vocables[Selector.idx]["answers"][-2]["user"] == self.user:
+                del vocables.vocables[Selector.idx]["answers"][-2]
+        self.Button_RemoveUserEntry.destroy()
+    def Buttonfunc_RemoveUser2Entry(self):
+        if vocables.vocables[Selector.idx]["answers"][-1]["user"] == self.user2:
+            del vocables.vocables[Selector.idx]["answers"][-1]
+        self.Button_RemoveUser2Entry.destroy()
     def Buttonfunc_user1(self):
         if self.user == "":
             self.user="Andreas"
@@ -221,11 +241,13 @@ class GUI_control:
                     vocables.vocables = json.load(json_file)
             else:
                 vocables.vocables = ParseTxt_toDicts(self.path)
+                vocables.vocables[0]["last_stop"]=0
         elif self.path[-4:] == "json":
             with open(self.path) as json_file:
                 vocables.vocables = json.load(json_file)
                 #print(vocables.vocables)
         Selector.NumberOfEnteties(len(vocables.vocables))
+        Selector.idx=vocables.vocables[0]["last_stop"]
         self.Create_Buttons()
 
     def Buttonfunc_SwitchLanguage(self):
@@ -260,6 +282,7 @@ class GUI_control:
         self.Create_Buttons()
 
     def Buttonfunc_Save_Exit(self):
+        vocables.vocables[0]["last_stop"]=Selector.idx
         if self.path[-3:] == "txt":
             with open(self.path[:-3] + "json", 'w') as fp:
                 json.dump(vocables.vocables, fp)
