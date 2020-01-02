@@ -285,10 +285,10 @@ class GUI_control:
         vocables.vocables[0]["last_stop"]=Selector.idx
         if self.path[-3:] == "txt":
             with open(self.path[:-3] + "json", 'w') as fp:
-                json.dump(vocables.vocables, fp)
+                json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
         elif self.path[-4:] == "json":
             with open(self.path, 'w') as fp:
-                json.dump(vocables.vocables, fp)
+                json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
         self.root.destroy()
 
 class C_selection:
