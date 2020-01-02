@@ -61,7 +61,7 @@ class C_vocables:
 class GUI_control:
     def __init__(self):
         self.root = tk.Tk(className=" Nehls'scher Vokabeltrainer")
-        self.canvas = tk.Canvas(self.root, height=500, width=800)
+        self.canvas = tk.Canvas(self.root, height=500, width=900)
         self.canvas.pack()
         self.frame=[]
         self.frame.append(tk.Frame(self.root))
