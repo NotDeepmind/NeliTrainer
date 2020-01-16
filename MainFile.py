@@ -183,9 +183,12 @@ class GUI_control:
                           command=MyGUI.Buttonfunc_user4).pack()
                 self.ButtonLayout = 0
         elif self.ButtonLayout == 5:
-            tk.Button(self.frameButtons, text="Falsche Antworten wiederholen", font=self.fontLayout,
-                      width=2 * self.width, height=self.height,
-                      command=self.Buttonfunc_Repeat_Wrong_Answers).grid(row=3, column=2)
+            for i in range(len(self.user_answers)):
+                if (self.user_answers[i] == "Falsch"):
+                    tk.Button(self.frameButtons, text="Falsche Antworten wiederholen", font=self.fontLayout,
+                              width=2 * self.width, height=self.height,
+                              command=self.Buttonfunc_Repeat_Wrong_Answers).grid(row=3, column=2)
+                    break
             tk.Button(self.frameButtons, text="Speichern & Beenden", font=self.fontLayout, width=2 * self.width,
                       height=self.height,
                       command=self.Buttonfunc_Save_Exit).grid(row=4, column=2)
@@ -246,6 +249,11 @@ class GUI_control:
 
     def Userselection(self):
         ### Check for due vocables
+        if self.user in vocables.vocables[0]:
+            Selector.idx = vocables.vocables[0][self.user]["last_stop"]  # continue from last if simplay cycling through
+        else:
+            vocables.vocables[0][self.user]={}
+            vocables.vocables[0][self.user]["last_stop"] = -1
         List_Due_Vocables = []
         for i in range(len(vocables.vocables)):
             try:
@@ -280,7 +288,6 @@ class GUI_control:
         self.Create_Buttons()
 
     def Buttonfunc_NextVocable(self):
-        print(self.frame)
         for widget in MyGUI.frame[1].winfo_children():
             widget.destroy()
         Selector.NextEntity()
@@ -302,9 +309,12 @@ class GUI_control:
         tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout, text="").pack()
         tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout,
                  text="Dies ist die " + str(1 + len(self.user_answers)) + ". Vokabel").pack()
-        if len(Selector.Entities[1]) - len(self.user_answers) > 0:
+        if (len(Selector.Entities[1]) - len(self.user_answers) > 0) and (Selector.listID == 1):
             tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout, text="Es gibt noch " + str(
                 len(Selector.Entities[1]) - len(self.user_answers)) + " fällige Vokabeln").pack()
+        elif Selector.listID > 1:
+            tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout, text="Es gibt noch " + str(
+                len(Selector.Entities[-1]) - len(self.user_answers)) + " fällige Vokabeln").pack()
         self.Create_Buttons()
 
     def Buttonfunc_SelectLecture(self):
@@ -320,12 +330,10 @@ class GUI_control:
                     vocables.vocables = json.load(json_file)
             else:
                 vocables.vocables = ParseTxt_toDicts(self.path)
-                vocables.vocables[0]["last_stop"] = -1
         elif self.path[-4:] == "json":
             with open(self.path) as json_file:
                 vocables.vocables = json.load(json_file)
         Selector.NumbersOfEnteties(range(len(vocables.vocables)))
-        Selector.idx = vocables.vocables[0]["last_stop"]  # continue from last if simplay cycling through
         self.Create_Buttons()
 
     def Buttonfunc_SwitchLanguage(self):
@@ -362,9 +370,7 @@ class GUI_control:
                      text=str(len([i for i, x in enumerate(MyGUI.user2_answers) if x == "Falsch"])) + " falsch").pack()
         self.ButtonLayout = 5
         if Selector.listID==0:
-            print("try to change last_stop")
-            vocables.vocables[0]["last_stop"] = Selector.idx
-            print(vocables.vocables[0]["last_stop"])
+            vocables.vocables[0][self.user]["last_stop"] = Selector.idx
         self.Create_Buttons()
 
     def Buttonfunc_Repeat_Wrong_Answers(self):
@@ -374,10 +380,8 @@ class GUI_control:
         for i in range(len(self.user_answers)):
             if (self.user_answers[i] == "Falsch") and (i < len(Selector.Entities[1])) and (Selector.listID <= 1):
                 New_Indexes.append(Selector.Entities[1][i])
-                print("fällige vokabel falsch")
             elif (self.user_answers[i] == "Falsch") and (i >= len(Selector.Entities[1])) and (Selector.listID <= 1):
-                i = i - len(Selector.Entities[1]) + vocables.vocables[0]["last_stop"]
-                print("reguläre liste im ersten durchlauf eintrag" + str(i))
+                i = i - len(Selector.Entities[1]) + vocables.vocables[0][self.user]["last_stop"]
                 while i >= len(Selector.Entities[0]):
                     i -= len(Selector.Entities[0])
                 New_Indexes.append(Selector.Entities[0][i])
@@ -413,12 +417,11 @@ class C_selection:
 
     def NumbersOfEnteties(self, NumberOfEnteties):
         self.Entities.append(NumberOfEnteties)
-        print(self.Entities)
 
     def NextEntity(self):
         self.IDs += 1
         if (self.IDs >= len(self.Entities[self.listID])) and self.listID == 1:
-            self.IDs = vocables.vocables[0]["last_stop"]
+            self.IDs = vocables.vocables[0][MyGUI.user]["last_stop"]
             self.listID = 0
         elif (self.IDs >= len(self.Entities[self.listID])):
             self.IDs = 0
