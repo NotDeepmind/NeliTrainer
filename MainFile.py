@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 import json
 from datetime import datetime as dt
+import datetime as dtt
 import os as os
 
 
@@ -33,16 +34,14 @@ class C_vocables:
             self.EnterResults(RecentAnswer,CorrectInstance2,MyGUI.user,idx)
 
     def EnterResults(self,RecentAnswer,CorrectInstance2,user,id):
-        print(id)
         if user in self.vocables[id]["answers"]:
-            print("user exists")
+            pass
         else:
             self.vocables[id]["answers"][user]={}
             self.vocables[id]["answers"][user]["datetime"]=[]
             self.vocables[id]["answers"][user]["answer"]=[]
             self.vocables[id]["answers"][user]["delay"]=[]
             self.vocables[id]["answers"][user]["correctness"]=[]
-            print(self.vocables[id]["answers"][user])
         self.vocables[id]["answers"][user]["datetime"].append(dt.now().strftime("%Y-%m-%d %H:%M:%S"))
         self.vocables[id]["answers"][user]["answer"].append(RecentAnswer)
         self.vocables[id]["answers"][user]["delay"].append("")
@@ -58,6 +57,10 @@ class C_vocables:
                 MyGUI.user_answers.append("Falsch")
             elif user==MyGUI.user2:
                 MyGUI.user2_answers.append("Falsch")
+
+    def NextTime(self,id,user,AddedInterval):
+        TimeToAskAgain=dt.today()+dtt.timedelta(days=AddedInterval)
+        self.vocables[id]["answers"][user]["NextTime"]=TimeToAskAgain.strftime("%Y-%m-%d")
 
 
 
@@ -96,8 +99,13 @@ class GUI_control:
             self.ButtonLayout = 1
             tk.Button(self.frameButtons, text='Nächste Vokabel', font=self.fontLayout, width=self.width, height=self.height,
                                          command=self.Buttonfunc_NextVocable).grid(row=2, column=2)
-            tk.Button(self.frameButtons, text="Spanisch <--> Deutsch", font=self.fontLayout, width=self.width, height = self.height,
-                                          command=self.Buttonfunc_SwitchLanguage).grid(row = 3, column = 2)
+            #tk.Button(self.frameButtons, text="Spanisch <--> Deutsch", font=self.fontLayout, width=self.width, height = self.height,
+            #                              command=self.Buttonfunc_SwitchLanguage).grid(row = 3, column = 2)
+
+            self.Frame_Buttons_delay=tk.Frame(self.frameButtons)
+            self.Frame_Buttons_delay.grid(row=3,column=2)#TODO das ist hier im falschen menü, muss erst nach prüfen kommen, falscher layout index
+            tk.Button(self.Frame_Buttons_delay, test="+1d",command=lambda: vocables.NextTime(Selector.idx,MyGUI.user,1)) #TODO finish the funtion here
+
             tk.Button(self.frameButtons, text="Session beenden", font=self.fontLayout, width=self.width, height = self.height,
                                           command=self.Buttonfunc_EndSession).grid(row = 4, column = 2)
             if self.user2 != "":
@@ -221,7 +229,6 @@ class GUI_control:
 
     def Buttonfunc_CheckEntry(self):
         vocables.CheckEntry(Selector.idx)
-        print(Selector.idx)
         self.Create_Buttons()
 
     def Buttonfunc_NextVocable(self):
@@ -261,7 +268,6 @@ class GUI_control:
         elif self.path[-4:] == "json":
             with open(self.path) as json_file:
                 vocables.vocables = json.load(json_file)
-                #print(vocables.vocables)
         Selector.NumberOfEnteties(len(vocables.vocables))
         Selector.idx=vocables.vocables[0]["last_stop"]
         self.Create_Buttons()
