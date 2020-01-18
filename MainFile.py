@@ -165,7 +165,7 @@ class GUI_control:
             self.ButtonLayout = 4
         elif self.ButtonLayout == 4:
             if self.user == "":
-                self.ButtonLayout = 0
+                self.ButtonLayout = 6
                 self.Buttonfunc_NextVocable()
                 self.Create_Buttons()
             else:
@@ -181,7 +181,7 @@ class GUI_control:
                               command=MyGUI.Buttonfunc_user3).pack()
                 tk.Button(MyGUI.frameButtons, text="Kein Benutzer", font=self.fontLayout,width=self.width, height=self.height,
                           command=MyGUI.Buttonfunc_user4).pack()
-                self.ButtonLayout = 0
+                self.ButtonLayout = 6
         elif self.ButtonLayout == 5:
             for i in range(len(self.user_answers)):
                 if (self.user_answers[i] == "Falsch"):
@@ -192,6 +192,12 @@ class GUI_control:
             tk.Button(self.frameButtons, text="Speichern & Beenden", font=self.fontLayout, width=2 * self.width,
                       height=self.height,
                       command=self.Buttonfunc_Save_Exit).grid(row=4, column=2)
+        elif self.ButtonLayout == 6: #todo hier auswahl der sprache
+            tk.Button(MyGUI.frameButtons, text="Vorgabe Deutsch", font=self.fontLayout,width=self.width, height=self.height,
+                      command=lambda: self.Buttonfunc_SwitchLanguage(0)).pack()
+            tk.Button(MyGUI.frameButtons, text="Vorgabe Spanisch", font=self.fontLayout,width=self.width, height=self.height,
+                      command=lambda: self.Buttonfunc_SwitchLanguage(1)).pack()
+            self.ButtonLayout=0
 
     def Buttonfunc_RemoveUserEntry(self):
         del MyGUI.user_answers[-1]
@@ -221,7 +227,6 @@ class GUI_control:
             self.Userselection()
         elif self.user2 == "":
             self.user2 = "Andreas"
-            self.Buttonfunc_NextVocable()
         self.Create_Buttons()
 
     def Buttonfunc_user2(self):
@@ -230,7 +235,6 @@ class GUI_control:
             self.Userselection()
         elif self.user2 == "":
             self.user2 = "Christa"
-            self.Buttonfunc_NextVocable()
         self.Create_Buttons()
 
     def Buttonfunc_user3(self):
@@ -239,12 +243,9 @@ class GUI_control:
             self.Userselection()
         elif self.user2 == "":
             self.user2 = "Tester"
-            self.Buttonfunc_NextVocable()
         self.Create_Buttons()
 
     def Buttonfunc_user4(self):
-        if self.ButtonLayout == 0:
-            self.Buttonfunc_NextVocable()
         self.Create_Buttons()
 
     def Userselection(self):
@@ -336,11 +337,10 @@ class GUI_control:
         Selector.NumbersOfEnteties(range(len(vocables.vocables)))
         self.Create_Buttons()
 
-    def Buttonfunc_SwitchLanguage(self):
-        if self.languagemode == 1:
-            self.languagemode = 0
-        elif self.languagemode == 0:
-            self.languagemode = 1
+    def Buttonfunc_SwitchLanguage(self,Language_ID):
+        self.languagemode = Language_ID
+        self.Buttonfunc_NextVocable()
+        self.Create_Buttons()
 
     def Buttonfunc_EndSession(self):
         for widget in MyGUI.frame[1].winfo_children():
@@ -374,8 +374,6 @@ class GUI_control:
         self.Create_Buttons()
 
     def Buttonfunc_Repeat_Wrong_Answers(self):
-        # TODO hier rekursion einfügen und solange wiederholen bis keine falschen mehr kommen
-        # TODO rebuild GUI to show everything correctly
         New_Indexes = []
         for i in range(len(self.user_answers)):
             if (self.user_answers[i] == "Falsch") and (i < len(Selector.Entities[1])) and (Selector.listID <= 1):
