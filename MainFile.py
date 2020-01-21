@@ -327,12 +327,12 @@ class GUI_control:
         self.path = filedialog.askopenfilename()
         if self.path[-3:] == "txt":
             if os.path.isfile(self.path[:-3] + "json"):
-                with open(self.path[:-3] + "json") as json_file:
+                with open(self.path[:-3] + "json", encoding='UTF8') as json_file:
                     vocables.vocables = json.load(json_file)
             else:
                 vocables.vocables = ParseTxt_toDicts(self.path)
         elif self.path[-4:] == "json":
-            with open(self.path) as json_file:
+            with open(self.path, encoding='UTF8') as json_file:
                 vocables.vocables = json.load(json_file)
         Selector.NumbersOfEnteties(range(len(vocables.vocables)))
         self.Create_Buttons()
