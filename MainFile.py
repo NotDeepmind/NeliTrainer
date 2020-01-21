@@ -398,10 +398,10 @@ class GUI_control:
 
     def Buttonfunc_Save_Exit(self):
         if self.path[-3:] == "txt":
-            with open(self.path[:-3] + "json", 'w') as fp:
+            with open(self.path[:-3] + "json", 'w', encoding='UTF8') as fp:
                 json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
         elif self.path[-4:] == "json":
-            with open(self.path, 'w') as fp:
+            with open(self.path, 'w', encoding='UTF8') as fp:
                 json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
         self.root.destroy()
 
