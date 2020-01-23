@@ -197,6 +197,8 @@ class GUI_control:
                       command=lambda: self.Buttonfunc_SwitchLanguage(0)).pack()
             tk.Button(MyGUI.frameButtons, text="Vorgabe Spanisch", font=self.fontLayout,width=self.width, height=self.height,
                       command=lambda: self.Buttonfunc_SwitchLanguage(1)).pack()
+            tk.Button(MyGUI.frameButtons, text="Vokabeln aus Txt hinzufügen", font=self.fontLayout,width=self.width, height=self.height,
+                      command=self.Buttonfunc_AddVocables).pack()
             self.ButtonLayout=0
 
     def Buttonfunc_RemoveUserEntry(self):
@@ -317,6 +319,23 @@ class GUI_control:
             tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout, text="Es gibt noch " + str(
                 len(Selector.Entities[-1]) - len(self.user_answers)) + " fällige Vokabeln").pack()
         self.Create_Buttons()
+
+    def Buttonfunc_AddVocables(self):
+        AddedPath=filedialog.askopenfilename()
+        if AddedPath[-3:] != "txt":
+            print("Es können nur Txt Dateien hinzugefügt werden (Komma getrennt, Tabstopp getrennt)")
+        else:
+            NewVocs = ParseTxt_toDicts(AddedPath)
+            for item in NewVocs:
+                exists = 0
+                for olditem in vocables.vocables:
+                    if item["spanisch"] == olditem["spanisch"]:
+                        exists = 1
+                        print(item["spanisch"])
+                        print(item["spanisch"][0] + " exists already")
+                if exists == 0:
+                    vocables.vocables.append(item)
+                    print(item["spanisch"][0] + " newly added to the database")
 
     def Buttonfunc_SelectLecture(self):
         # select vocabulary file and open it
