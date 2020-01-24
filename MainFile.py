@@ -9,14 +9,26 @@ import Faelligkeit as fk
 
 
 #todo Kommentarfelder beim einlesen von txt.Files berücksichtigen
-#todo "#" als wildcard für richtige Eingabe vorsehen
 #todo immer 6 Antwortfelder geben <-- erstmal lassen
 
-#todo sprachenauswahl geht irgendwie nichtmehr -.-
+IntervalMatrix = []
+IntervalMatrix.append([	0	,	0	,	1	,	1	,	1	])
+IntervalMatrix.append([	1	,	1	,	2	,	1	,	1	])
+IntervalMatrix.append([	2	,	2	,	3	,	1	,	2	])
+IntervalMatrix.append([	3	,	3	,	4	,	1	,	2	])
+IntervalMatrix.append([	4	,	4	,	5	,	1	,	3	])
+IntervalMatrix.append([	5	,	5	,	6	,	1	,	3	])
+IntervalMatrix.append([	6	,	6	,	7	,	1	,	4	])
+IntervalMatrix.append([	7	,	14	,	15	,	1	,	7	])
+IntervalMatrix.append([	15	,	21	,	22	,	1	,	11	])
+IntervalMatrix.append([	22	,	29	,	31	,	1	,	15	])
+IntervalMatrix.append([	30	,	30	,	61	,	1	,	30	])
+IntervalMatrix.append([	61	,	90	,	91	,	1	,	45	])
+IntervalMatrix.append([	91	,	120	,	121	,	1	,	60	])
+IntervalMatrix.append([	121	,	150	,	151	,	1	,	75	])
+IntervalMatrix.append([	151	,	180	,	180	,	1	,	90	])
 
 
-
-VokabelnProSession = 5
 
 
 class C_vocables:
@@ -121,28 +133,28 @@ class GUI_control:
         self.frameButtons.grid_columnconfigure(10, weight=1)
         if self.ButtonLayout == 0:
             self.ButtonLayout = 1
-            #todo hier matrix vorsehen
-            # ["nach Fälligkeit", "nach Reihenfolge"]
             if self.mode == "nach Fälligkeit":
                 tk.Label(self.frameButtons, text="Erneut fragen in:", font=self.fontLayout, width=self.width,
                      height=self.height).grid(row=1, column=2)
                 self.Frame_Buttons_delay = tk.Frame(self.frameButtons, width=288, height=45)
                 self.Frame_Buttons_delay.grid(row=2, column=2)
-                tk.Button(self.Frame_Buttons_delay, text="1d",
-                          command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 1),
-                          font=self.fontLayout, height=self.height).grid(row=0, column=0)
-                tk.Button(self.Frame_Buttons_delay, text="3d",
-                          command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 3),
-                          font=self.fontLayout, height=self.height).grid(row=0, column=1)
-                tk.Button(self.Frame_Buttons_delay, text="7d",
-                          command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 7),
-                          font=self.fontLayout, height=self.height).grid(row=0, column=2)
-                tk.Button(self.Frame_Buttons_delay, text="30d",
-                          command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 30),
-                          font=self.fontLayout, height=self.height).grid(row=0, column=3)
-                tk.Button(self.Frame_Buttons_delay, text="180d",
-                          command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 30),
-                          font=self.fontLayout, height=self.height).grid(row=0, column=4)
+                LastDelayList = vocables.vocables[Selector.idx]["answers"][self.user]["delay"]
+                LastDelayList.reverse() #reverse once to check from last, because all enties in the "nach Reihenfolge" mode will have a delay of -1 and must be skipped
+                LastDelay = []
+                for delay in LastDelayList:
+                    if delay >= 0:
+                        LastDelay = delay
+                        break
+                for row in IntervalMatrix:
+                    if LastDelay >= row[0] and LastDelay <= row[1]:
+                        self.IntervalMatrixRow = row #find the right row of the delay matrix
+                for id in range(2,5):
+                    tk.Button(self.Frame_Buttons_delay, text="+" + str(self.IntervalMatrixRow[id]) + "Tage",
+                              command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, self.IntervalMatrixRow[id]),
+                              font=self.fontLayout, height=self.height).grid(row=0, column=id-1)
+                self.root.bind("<Return>", lambda event: vocables.NextTime(Selector.idx, MyGUI.user, self.IntervalMatrixRow[2]))
+                LastDelayList.reverse() #must reverse to again to preserve correct entry
+
             elif self.mode == "nach Reihenfolge":
                 tk.Button(self.frameButtons, text="Nächste Vokabel", command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 30),
                           font=self.fontLayout, height=self.height, width=self.width).grid(row=0, column=2)
@@ -164,7 +176,7 @@ class GUI_control:
         elif self.ButtonLayout == "MainScreen":
             self.RadioBtnsContents=[]
             tk.Label(self.frame[0], text = "Benutzerauswahl:", font = self.fontLayout).pack(anchor = "w", ipadx = 10)
-            self.RadioBtns["user selection"] = tk.StringVar(self.frame[0],value="x")
+            self.RadioBtns["user selection"] = tk.StringVar(self.frame[0],value="Andreas")
             optionlist = ["Andreas", "Christa", "Gemeinsam"]
             for option in optionlist:
                 self.RadioBtnsContents.append(tk.Radiobutton(self.frame[0], text=option, variable=self.RadioBtns["user selection"], value=option))
@@ -172,7 +184,7 @@ class GUI_control:
                 self.RadioBtnsContents[-1].pack(side = 'top', anchor = 'w', ipadx = 30)
 
             tk.Label(self.frame[0], text="Vorgabe auf:", font=self.fontLayout).pack(anchor="w", ipadx=10)
-            self.RadioBtns["language"] = tk.StringVar(self.frame[0], value="x")
+            self.RadioBtns["language"] = tk.StringVar(self.frame[0], value="deutsch")
             optionlist = ["spanisch", "deutsch"]
             for option in optionlist:
                 self.RadioBtnsContents.append(
@@ -181,7 +193,7 @@ class GUI_control:
                 self.RadioBtnsContents[-1].pack(side='top', anchor='w', ipadx=30)
 
             tk.Label(self.frame[1], text="Abfragemodus:", font=self.fontLayout).pack(anchor="w", ipadx=10)
-            self.RadioBtns["mode"] = tk.StringVar(self.frame[1], value="x")
+            self.RadioBtns["mode"] = tk.StringVar(self.frame[1], value="nach Fälligkeit")
             optionlist = ["nach Fälligkeit", "nach Reihenfolge"]
             for option in optionlist:
                 self.RadioBtnsContents.append(
@@ -242,6 +254,7 @@ class GUI_control:
         for widget in MyGUI.frame[1].winfo_children():
             widget.destroy()
         Selector.NextEntity()
+        print(str(self.languagemode) + " in NextVocable")
         if self.languagemode == 0:
             vocables.vocable(vocables.vocables[Selector.idx].get("deutsch"),
                              vocables.vocables[Selector.idx].get("spanisch"))
@@ -322,10 +335,10 @@ class GUI_control:
             self.RadioBtns["errors"].append(tk.Label(self.frame[1], text="Bitte Sprache auswählen!", fg="RED"))
             self.RadioBtns["errors"][-1].pack(anchor = "w")
             errors = 1
-        elif self.RadioBtns["language"]=="deutsch":
-            self.Buttonfunc_SwitchLanguage(0)
-        elif self.RadioBtns["language"]=="spanisch":
-            self.Buttonfunc_SwitchLanguage(1)
+        elif self.RadioBtns["language"].get()=="deutsch":
+            self.languagemode = 0
+        elif self.RadioBtns["language"].get()=="spanisch":
+            self.languagemode = 1
 
         if self.RadioBtns["mode"].get() == "x":
             self.RadioBtns["errors"].append(tk.Label(self.frame[1], text="Bitte Modus auswählen!", fg="RED"))
@@ -349,11 +362,6 @@ class GUI_control:
             self.Buttonfunc_NextVocable()
             self.ButtonLayout = 1
             self.Create_Buttons()
-
-    def Buttonfunc_SwitchLanguage(self,Language_ID):
-        self.languagemode = Language_ID
-        self.Buttonfunc_NextVocable()
-        self.Create_Buttons()
 
     def Buttonfunc_EndSession(self):
         for widget in MyGUI.frame[1].winfo_children():
@@ -428,6 +436,7 @@ class C_selection:
         if MyGUI.mode == "nach Reihenfolge" and self.listID == 1:
             self.IDs = vocables.vocables[0][MyGUI.user]["last_stop"] + 1
             self.listID = 0
+        print(self.IDs)
         self.idx = self.Entities[self.listID][self.IDs]
 
 
