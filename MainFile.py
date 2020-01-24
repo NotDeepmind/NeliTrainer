@@ -478,6 +478,7 @@ def ParseTxt_toDicts(path):
 
 
 MyGUI = GUI_control()
+MyGUI.restart = False
 vocables = C_vocables([])
 Selector = C_selection()
 MyGUI.Create_Buttons()
