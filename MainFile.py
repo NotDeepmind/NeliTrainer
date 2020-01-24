@@ -176,7 +176,7 @@ class GUI_control:
         elif self.ButtonLayout == "MainScreen":
             self.RadioBtnsContents=[]
             tk.Label(self.frame[0], text = "Benutzerauswahl:", font = self.fontLayout).pack(anchor = "w", ipadx = 10)
-            self.RadioBtns["user selection"] = tk.StringVar(self.frame[0],value="Andreas")
+            self.RadioBtns["user selection"] = tk.StringVar(self.frame[0],value="x")
             optionlist = ["Andreas", "Christa", "Gemeinsam"]
             for option in optionlist:
                 self.RadioBtnsContents.append(tk.Radiobutton(self.frame[0], text=option, variable=self.RadioBtns["user selection"], value=option))
@@ -184,7 +184,7 @@ class GUI_control:
                 self.RadioBtnsContents[-1].pack(side = 'top', anchor = 'w', ipadx = 30)
 
             tk.Label(self.frame[0], text="Vorgabe auf:", font=self.fontLayout).pack(anchor="w", ipadx=10)
-            self.RadioBtns["language"] = tk.StringVar(self.frame[0], value="deutsch")
+            self.RadioBtns["language"] = tk.StringVar(self.frame[0], value="x")
             optionlist = ["spanisch", "deutsch"]
             for option in optionlist:
                 self.RadioBtnsContents.append(
@@ -193,7 +193,7 @@ class GUI_control:
                 self.RadioBtnsContents[-1].pack(side='top', anchor='w', ipadx=30)
 
             tk.Label(self.frame[1], text="Abfragemodus:", font=self.fontLayout).pack(anchor="w", ipadx=10)
-            self.RadioBtns["mode"] = tk.StringVar(self.frame[1], value="nach Fälligkeit")
+            self.RadioBtns["mode"] = tk.StringVar(self.frame[1], value="x")
             optionlist = ["nach Fälligkeit", "nach Reihenfolge"]
             for option in optionlist:
                 self.RadioBtnsContents.append(
