@@ -216,9 +216,12 @@ class GUI_control:
                               width=2 * self.width, height=self.height,
                               command=self.Buttonfunc_Repeat_Wrong_Answers).grid(row=3, column=2)
                     break
+            tk.Button(self.frameButtons, text="Speichern & Neustarten", font=self.fontLayout, width=2 * self.width,
+                      height=self.height,
+                      command=self.Buttonfunc_Save_Restart).grid(row=4, column=2)
             tk.Button(self.frameButtons, text="Speichern & Beenden", font=self.fontLayout, width=2 * self.width,
                       height=self.height,
-                      command=self.Buttonfunc_Save_Exit).grid(row=4, column=2)
+                      command=self.Buttonfunc_Save_Exit).grid(row=5, column=2)
 
     def Buttonfunc_RemoveUserEntry(self):
         MyGUI.user_answers[-1] = "Richtig"
@@ -254,7 +257,6 @@ class GUI_control:
         for widget in MyGUI.frame[1].winfo_children():
             widget.destroy()
         Selector.NextEntity()
-        print(str(self.languagemode) + " in NextVocable")
         if self.languagemode == 0:
             vocables.vocable(vocables.vocables[Selector.idx].get("deutsch"),
                              vocables.vocables[Selector.idx].get("spanisch"))
@@ -404,6 +406,17 @@ class GUI_control:
         MyGUI.ButtonLayout = 1
         MyGUI.Create_Buttons()
 
+    def Buttonfunc_Save_Restart(self):
+        if self.path[-3:] == "txt":
+            with open(self.path[:-3] + "json", 'w', encoding='UTF8') as fp:
+                json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
+        elif self.path[-4:] == "json":
+            with open(self.path, 'w', encoding='UTF8') as fp:
+                json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
+        self.restart = True
+        self.root.destroy()
+
+
     def Buttonfunc_Save_Exit(self):
         if self.path[-3:] == "txt":
             with open(self.path[:-3] + "json", 'w', encoding='UTF8') as fp:
@@ -427,16 +440,15 @@ class C_selection:
 
     def NextEntity(self):
         self.IDs += 1
+        if MyGUI.mode == "nach Reihenfolge" and self.listID == 1:
+            self.IDs = vocables.vocables[0][MyGUI.user]["last_stop"] + 1
+            self.listID = 0
         if MyGUI.mode == "nach Fälligkeit" and type(MyGUI.MaxNumVocables) != int:
             MyGUI.MaxNumVocables = len(self.Entities[self.listID])
         elif MyGUI.mode == "nach Reihenfolge" and type(MyGUI.MaxNumVocables) != int:
             MyGUI.MaxNumVocables = int(MyGUI.MaxNumVocables)
-        elif MyGUI.mode == "nach Reihenfolge" and self.IDs >=len(self.Entities[0]):
+        if MyGUI.mode == "nach Reihenfolge" and self.IDs >=len(self.Entities[0]):
             self.IDs = 0
-        if MyGUI.mode == "nach Reihenfolge" and self.listID == 1:
-            self.IDs = vocables.vocables[0][MyGUI.user]["last_stop"] + 1
-            self.listID = 0
-        print(self.IDs)
         self.idx = self.Entities[self.listID][self.IDs]
 
 
@@ -470,3 +482,12 @@ vocables = C_vocables([])
 Selector = C_selection()
 MyGUI.Create_Buttons()
 MyGUI.root.mainloop()
+if MyGUI.restart:
+    del MyGUI
+    del vocables
+    del Selector
+    MyGUI = GUI_control()
+    vocables = C_vocables([])
+    Selector = C_selection()
+    MyGUI.Create_Buttons()
+    MyGUI.root.mainloop()
