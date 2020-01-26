@@ -4,8 +4,7 @@ import json
 from datetime import datetime as dt
 import datetime as dtt
 import os as os
-import Reihenfolge as rf
-import Faelligkeit as fk
+from ChangeManagement import ChangeManagement
 
 
 #todo Kommentarfelder beim einlesen von txt.Files berücksichtigen
@@ -174,6 +173,12 @@ class GUI_control:
             self.root.bind("<Return>", MyGUI.Buttonfunc_CheckEntry_Hotkey)
             self.ButtonLayout = 0
         elif self.ButtonLayout == "MainScreen":
+            for widget in self.frameButtons.winfo_children():
+                widget.destroy()
+            for widget in self.frame[0].winfo_children():
+                widget.destroy()
+            for widget in self.frame[1].winfo_children():
+                widget.destroy()
             self.RadioBtnsContents=[]
             tk.Label(self.frame[0], text = "Benutzerauswahl:", font = self.fontLayout).pack(anchor = "w", ipadx = 10)
             self.RadioBtns["user selection"] = tk.StringVar(self.frame[0],value="x")
@@ -207,7 +212,7 @@ class GUI_control:
             self.SelectLecture = tk.Button(MyGUI.frameButtons, text="Lektion auswählen", font=self.fontLayout,
                                            command=MyGUI.Buttonfunc_SelectLecture)
             self.SelectLecture.pack()
-            tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
+            #tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
             self.ButtonLayout = 1
 
         elif self.ButtonLayout == 5:
@@ -306,10 +311,13 @@ class GUI_control:
 
     def Buttonfunc_ReadOldData(self):
         self.path = filedialog.askopenfilename()
-        if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
-            vocables.vocables = InitializeOldData(self.path)
-        Selector.NumbersOfEnteties(range(len(vocables.vocables)))
-        tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
+        if self.path == "":
+            pass
+        else:
+            if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
+                vocables.vocables = InitializeOldData(self.path)
+            Selector.NumbersOfEnteties(range(len(vocables.vocables)))
+            tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
 
     def Buttonfunc_SelectLecture(self):
         # select vocabulary file and open it
@@ -320,19 +328,89 @@ class GUI_control:
 
         #print(self.RadioBtns["mode"].get())
 
-        self.path = filedialog.askopenfilename()
-        if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
-            if os.path.isfile(self.path[:-3] + "json"):
-                with open(self.path[:-3] + "json", encoding='UTF8') as json_file:
+        self.path == filedialog.askopenfilename()
+        if self.path != "":
+            if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
+                if os.path.isfile(self.path[:-3] + "json"):
+                    with open(self.path[:-3] + "json", encoding='UTF8') as json_file:
+                        vocables.vocables = json.load(json_file)
+                else:
+                    vocables.vocables = ParseTxt_toDicts(self.path)
+            elif self.path[-4:] == "json":
+                with open(self.path, encoding='UTF8') as json_file:
                     vocables.vocables = json.load(json_file)
-            else:
-                vocables.vocables = ParseTxt_toDicts(self.path)
-        elif self.path[-4:] == "json":
-            with open(self.path, encoding='UTF8') as json_file:
-                vocables.vocables = json.load(json_file)
-        Selector.NumbersOfEnteties(range(len(vocables.vocables)))
-        self.SelectLecture.pack_forget()
-        tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
+            Selector.NumbersOfEnteties(range(len(vocables.vocables)))
+            self.SelectLecture.pack_forget()
+            tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
+            tk.Button(self.frameButtons, text="Einträge ändern", font=self.fontLayout,
+                      command=self.Buttonfunc_ChangeManagement).pack()
+
+    def Buttonfunc_ChangeManagement(self):
+        for widget in self.frameButtons.winfo_children():
+            widget.destroy()
+        for widget in self.frame[0].winfo_children():
+            widget.destroy()
+        for widget in self.frame[1].winfo_children():
+            widget.destroy()
+        tk.Label(self.frame[0], text="SUCHE:",font=self.fontLayout).grid(row=1, column=1)
+        Attributes = ["Deutsch:", "Spanisch:", "Kommentar:"]
+        i = 0
+        SearchEntries=[]
+        for item in Attributes:
+            i += 1
+            tk.Label(self.frame[0], text=item, font=self.fontLayout, anchor="w").grid(row=i+1, column=1, sticky="W")
+            SearchEntries.append(tk.Entry(self.frame[0], font=self.fontLayout))
+            SearchEntries[-1].grid(row=i+1, column=2)
+        tk.Label(self.frame[1], text="Gefunden:",font=self.fontLayout).grid(row=1, column=1)
+        i = 0
+        FoundEntries=[]
+        for item in Attributes:
+            i += 1
+            tk.Label(self.frame[1], text=item, font=self.fontLayout, anchor="w").grid(row=i+1, column=1, sticky="W")
+            FoundEntries.append(tk.Entry(self.frame[1], font=self.fontLayout))
+            FoundEntries[-1].grid(row=i+1, column=2)
+        tk.Button(self.frame[1], text="Speichern", font=self.fontLayout,
+                  command="").grid(row=5,column=1,columnspan=2)
+        tk.Button(self.frame[0], text="Suchen", font=self.fontLayout,
+                  command=lambda: self.Buttonfunc_Suchen(SearchEntries[0].get(),SearchEntries[1].get(),SearchEntries[2].get(),vocables.vocables,FoundEntries)).grid(row=5,column=1,columnspan=2)
+
+
+        self.ButtonLayout = "MainScreen"
+        tk.Button(self.frameButtons, text="Zurück zum Hauptmenü", font=self.fontLayout, command=self.Create_Buttons).pack()
+    def Buttonfunc_Suchen(self, deutsch, spanisch, kommentar, vokabeln, FoundEntries):
+        #todo this needs much more stuff
+        ID = ChangeManagement(deutsch, spanisch, kommentar, vokabeln)
+        if ID == []:
+            tk.Label(self.frame[1], text="Eintrag nicht gefunden", font=self.fontLayout, anchor="w", fg="RED").grid(row=6, column=1,columnspan=2, sticky="W")
+        elif len(ID)>1:
+            tk.Label(self.frame[1], text=str(len(ID)) + " Einträge gefunden", font=self.fontLayout, anchor="w", fg="RED").grid(row=6, column=1,columnspan=2, sticky="W")
+            deutsch0 = ""
+            for word in vocables.vocables[ID[0]]["deutsch"]:
+                deutsch0 = deutsch0 + word + ","
+            deutsch0 = deutsch0[:-1]
+            FoundEntries[0].delete(0,"end")
+            FoundEntries[0].insert(0,deutsch0)
+            spanisch0 = ""
+            for word in vocables.vocables[ID[0]]["spanisch"]:
+                spanisch0 = spanisch0 + word + ","
+            spanisch0 = spanisch0[:-1]
+            FoundEntries[1].delete(0,"end")
+            FoundEntries[1].insert(0,spanisch0)
+            kommentar0 = ""
+            for word in vocables.vocables[ID[0]]["kommentar"]:
+                kommentar0 = kommentar0 + word + ","
+            kommentar0 = kommentar0[:-1]
+            FoundEntries[2].delete(0,"end")
+            FoundEntries[2].insert(0,kommentar0)
+
+
+        for i in ID:
+            print(vokabeln[i]["deutsch"])
+
+
+
+
+
 
     def Buttonfunc_Continue(self):
         for error in self.RadioBtns["errors"]:
