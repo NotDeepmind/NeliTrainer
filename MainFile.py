@@ -4,7 +4,7 @@ import json
 from datetime import datetime as dt
 import datetime as dtt
 import os as os
-from ChangeManagement import ChangeManagement
+import ChangeManagement as CM
 
 
 #todo Kommentarfelder beim einlesen von txt.Files berücksichtigen
@@ -379,7 +379,7 @@ class GUI_control:
         tk.Button(self.frameButtons, text="Zurück zum Hauptmenü", font=self.fontLayout, command=self.Create_Buttons).pack()
     def Buttonfunc_Suchen(self, deutsch, spanisch, kommentar, vokabeln, FoundEntries):
         #todo this needs much more stuff
-        ID = ChangeManagement(deutsch, spanisch, kommentar, vokabeln)
+        ID = CM.ChangeManagement(deutsch, spanisch, kommentar, vokabeln)
         if ID == []:
             tk.Label(self.frame[1], text="Eintrag nicht gefunden", font=self.fontLayout, anchor="w", fg="RED").grid(row=6, column=1,columnspan=2, sticky="W")
         elif len(ID)>1:
