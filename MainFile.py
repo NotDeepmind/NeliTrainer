@@ -15,6 +15,7 @@ nice_JSON = 0
 
 #compile via console in folder containing MainFile.py --> pyinstaller -F MainFile.py
 
+#todo abschlussauswertung am ende --> anzahl der beantwortetetn vokabeln & Anzahl der Antworten zeigen
 #todo immer 6 Antwortfelder geben <-- erstmal lassen
 
 IntervalMatrix = []
