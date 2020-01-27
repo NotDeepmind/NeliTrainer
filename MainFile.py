@@ -13,6 +13,7 @@ read_old_data = 0
 ### (ohne schöne Formatierung lässt sich erheblich Speicherplatz sparen)
 nice_JSON = 0
 
+#compile via console in folder containing MainFile.py --> pyinstaller -F MainFile.py
 
 #todo immer 6 Antwortfelder geben <-- erstmal lassen
 
