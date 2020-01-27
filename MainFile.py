@@ -11,7 +11,7 @@ read_old_data = 0
 
 ### Um das JSON File schön zu formatieren, folgende Variable auf 1 setzen.
 ### (ohne schöne Formatierung lässt sich erheblich Speicherplatz sparen)
-nice_JSON = 0
+nice_JSON = 1
 
 #compile via console in folder containing MainFile.py --> pyinstaller -F MainFile.py
 
@@ -392,7 +392,7 @@ class GUI_control:
             tk.Label(self.frame[1], text="Eintrag nicht gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
         elif len(CM.IDs)>1:
             tk.Label(self.frame[1], text=str(len(CM.IDs)) + " Einträge gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
-            CM.display(FoundEntries)
+        CM.display(FoundEntries)
     def Buttonfunc_CM_save(self, FoundEntries):
         i=0
         for key in ["deutsch", "spanisch", "kommentar"]:

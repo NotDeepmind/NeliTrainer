@@ -32,6 +32,7 @@ class ChangeManagement:
                     break
             if match == 3:
                 found.append(ID)
+                print(match)
 
             ID += 1
         self.IDs = found
