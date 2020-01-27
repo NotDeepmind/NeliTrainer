@@ -6,6 +6,13 @@ import datetime as dtt
 import os as os
 from ChangeManagement import ChangeManagement
 
+### Um Alte Daten einzulesen, folgende Variable auf 1 setzen:
+read_old_data = 0
+
+### Um das JSON File schön zu formatieren, folgende Variable auf 1 setzen.
+### (ohne schöne Formatierung lässt sich erheblich Speicherplatz sparen)
+nice_JSON = 0
+
 
 #todo immer 6 Antwortfelder geben <-- erstmal lassen
 
@@ -20,7 +27,7 @@ IntervalMatrix.append([	6	,	6	,	7	,	1	,	4	])
 IntervalMatrix.append([	7	,	14	,	15	,	1	,	7	])
 IntervalMatrix.append([	15	,	21	,	22	,	1	,	11	])
 IntervalMatrix.append([	22	,	29	,	31	,	1	,	15	])
-IntervalMatrix.append([	30	,	30	,	61	,	1	,	30	])
+IntervalMatrix.append([	30	,	60	,	61	,	1	,	30	])
 IntervalMatrix.append([	61	,	90	,	91	,	1	,	45	])
 IntervalMatrix.append([	91	,	120	,	121	,	1	,	60	])
 IntervalMatrix.append([	121	,	150	,	151	,	1	,	75	])
@@ -211,7 +218,8 @@ class GUI_control:
             self.SelectLecture = tk.Button(MyGUI.frameButtons, text="Lektion auswählen", font=self.fontLayout,
                                            command=MyGUI.Buttonfunc_SelectLecture)
             self.SelectLecture.pack()
-            #tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
+            if read_old_data == 1:
+                tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
             self.ButtonLayout = 1
 
         elif self.ButtonLayout == 5:
@@ -494,10 +502,16 @@ class GUI_control:
     def Buttonfunc_saving(self):
         if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
             with open(self.path[:-3] + "json", 'w', encoding='UTF8') as fp:
-                json.dump(vocables.vocables, fp)
+                if nice_JSON == 1:
+                    json.dump(vocables.vocables, fp, indent=4)
+                else:
+                    json.dump(vocables.vocables, fp)
         elif self.path[-4:] == "json":
             with open(self.path, 'w', encoding='UTF8') as fp:
-                json.dump(vocables.vocables, fp)
+                if nice_JSON == 1:
+                    json.dump(vocables.vocables, fp, indent=4)
+                else:
+                    json.dump(vocables.vocables, fp)
 
 
 
@@ -564,22 +578,22 @@ def InitializeOldData(path):
     file_content = file.readlines()
     for line in file_content:
         strings = line.split("\t")
-        if strings[0] != strings[4]:
-            print("Hier wurde eine Vokabel falsch zugeordnet!")
-        stringsDeutsch = strings[1].split(",")
+        stringsDeutsch = strings[0].split(",")
         if stringsDeutsch[-1] == "":
             del stringsDeutsch[-1]
-        stringsSpanisch = strings[2].split(",")
-        stringsKommentar = strings[3]
+        stringsSpanisch = strings[1].split(",")
+        stringsKommentar = strings[2]
         stringsAnswer = []
         for id in range(len(stringsSpanisch)):
             stringsAnswer.append("")
         if stringsSpanisch[-1] == "":
             del stringsSpanisch[-1]
-        IntDue = int(strings[5])
-        IntDue = dt.today() + dtt.timedelta(IntDue-1619)
-        IntDelay = int(strings[6].strip())
-
+        IntDueA = int(strings[3])
+        IntDueA = dt.today() + dtt.timedelta(IntDueA-1629)
+        IntDelayA = int(strings[4].strip())
+        IntDueC = int(strings[5])
+        IntDueC = dt.today() + dtt.timedelta(IntDueC-1629)
+        IntDelayC = int(strings[6].strip())
 
         ListOfDicts.append({
             "spanisch" : stringsSpanisch,
@@ -589,13 +603,21 @@ def InitializeOldData(path):
                 "Andreas": {
                     "datetime" :    [""],
                     "answer" :      [stringsAnswer],
-                    "delay" :       [IntDelay],
+                    "delay" :       [IntDelayA],
                     "correctness" : ["Richtig"],
-                    "NextTime" :    IntDue.strftime("%Y-%m-%d")
+                    "NextTime" :    IntDueA.strftime("%Y-%m-%d")
+                },
+                "Christa": {
+                    "datetime":     [""],
+                    "answer":       [stringsAnswer],
+                    "delay":        [IntDelayC],
+                    "correctness":  ["Richtig"],
+                    "NextTime":     IntDueC.strftime("%Y-%m-%d")
                 }
             }
         })
         ListOfDicts[0]["Andreas"]={"last_stop": 0}
+        ListOfDicts[0]["Christa"]={"last_stop": 0}
     return ListOfDicts
 
 

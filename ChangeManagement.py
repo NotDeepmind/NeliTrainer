@@ -53,7 +53,7 @@ class ChangeManagement:
 
     def next(self, FoundEntries):
         self.idx += 1
-        if self.idx > len(self.IDs):
+        if self.idx > len(self.IDs)-1:
             self.idx = 0
         self.display(FoundEntries)
 
