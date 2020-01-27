@@ -4,10 +4,9 @@ import json
 from datetime import datetime as dt
 import datetime as dtt
 import os as os
-import ChangeManagement as CM
+from ChangeManagement import ChangeManagement
 
 
-#todo Kommentarfelder beim einlesen von txt.Files berücksichtigen
 #todo immer 6 Antwortfelder geben <-- erstmal lassen
 
 IntervalMatrix = []
@@ -294,30 +293,27 @@ class GUI_control:
 
     def Buttonfunc_AddVocables(self):
         AddedPath=filedialog.askopenfilename()
-        if AddedPath[-3:] != "txt":
+        if AddedPath[-3:] != "txt" and AddedPath[-3:] != "tsv":
             print("Es können nur Txt Dateien hinzugefügt werden (Komma getrennt, Tabstopp getrennt)")
         else:
             NewVocs = ParseTxt_toDicts(AddedPath)
             for item in NewVocs:
                 exists = 0
                 for olditem in vocables.vocables:
-                    if item["spanisch"] == olditem["spanisch"]:
+                    if item["deutsch"] == olditem["deutsch"]:
                         exists = 1
-                        print(item["spanisch"])
-                        print(item["spanisch"][0] + " exists already")
+                        print(item["deutsch"][0] + " exists already")
                 if exists == 0:
                     vocables.vocables.append(item)
-                    print(item["spanisch"][0] + " newly added to the database")
+                    print(item["deutsch"][0] + " newly added to the database")
+            self.Buttonfunc_saving()
 
     def Buttonfunc_ReadOldData(self):
         self.path = filedialog.askopenfilename()
-        if self.path == "":
-            pass
-        else:
-            if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
-                vocables.vocables = InitializeOldData(self.path)
-            Selector.NumbersOfEnteties(range(len(vocables.vocables)))
-            tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
+        if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
+            vocables.vocables = InitializeOldData(self.path)
+        Selector.NumbersOfEnteties(range(len(vocables.vocables)))
+        tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
 
     def Buttonfunc_SelectLecture(self):
         # select vocabulary file and open it
@@ -326,9 +322,7 @@ class GUI_control:
         # if shut properly if a json file with the same name as a txt exists in the same folder,
         # the json will be loaded to prevent resetting of the json
 
-        #print(self.RadioBtns["mode"].get())
-
-        self.path == filedialog.askopenfilename()
+        self.path = filedialog.askopenfilename()
         if self.path != "":
             if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
                 if os.path.isfile(self.path[:-3] + "json"):
@@ -341,9 +335,11 @@ class GUI_control:
                     vocables.vocables = json.load(json_file)
             Selector.NumbersOfEnteties(range(len(vocables.vocables)))
             self.SelectLecture.pack_forget()
-            tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
-            tk.Button(self.frameButtons, text="Einträge ändern", font=self.fontLayout,
+            tk.Button(MyGUI.frameButtons, text="Weiter", width=2*self.width, height=self.height, font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
+            tk.Button(self.frameButtons, text="Einträge ändern", width=2*self.width, height=self.height, font=self.fontLayout,
                       command=self.Buttonfunc_ChangeManagement).pack()
+            tk.Button(self.frameButtons, text="Weitere Vokabeln aus .TSV hinzufügen", width=2*self.width, height=self.height, font=self.fontLayout,
+                      command=self.Buttonfunc_AddVocables).pack()
 
     def Buttonfunc_ChangeManagement(self):
         for widget in self.frameButtons.winfo_children():
@@ -361,55 +357,46 @@ class GUI_control:
             tk.Label(self.frame[0], text=item, font=self.fontLayout, anchor="w").grid(row=i+1, column=1, sticky="W")
             SearchEntries.append(tk.Entry(self.frame[0], font=self.fontLayout))
             SearchEntries[-1].grid(row=i+1, column=2)
-        tk.Label(self.frame[1], text="Gefunden:",font=self.fontLayout).grid(row=1, column=1)
+        tk.Label(self.frame[1], text="Gefunden:").grid(row=1, column=1)
         i = 0
         FoundEntries=[]
         for item in Attributes:
             i += 1
-            tk.Label(self.frame[1], text=item, font=self.fontLayout, anchor="w").grid(row=i+1, column=1, sticky="W")
-            FoundEntries.append(tk.Entry(self.frame[1], font=self.fontLayout))
-            FoundEntries[-1].grid(row=i+1, column=2)
+            tk.Label(self.frame[1], text=item, font=self.fontLayout, anchor="w").grid(row=i*2, column=1, sticky="W")
+            FoundEntries.append(tk.Entry(self.frame[1], font=self.fontLayout, width=30))
+            FoundEntries[-1].grid(row=2*i+1, column=1, columnspan=2)
+        tk.Button(self.frame[1], text="Nächstes", font=self.fontLayout,
+                  command= lambda: CM.next(FoundEntries)).grid(row=8,column=2, sticky="W")
+        tk.Button(self.frame[1], text="Vorheriges", font=self.fontLayout,
+                  command= lambda: CM.previous(FoundEntries)).grid(row=8,column=1, sticky="E")
         tk.Button(self.frame[1], text="Speichern", font=self.fontLayout,
-                  command="").grid(row=5,column=1,columnspan=2)
+                  command=lambda: self.Buttonfunc_CM_save(FoundEntries)).grid(row=9,column=1,columnspan=2)
         tk.Button(self.frame[0], text="Suchen", font=self.fontLayout,
                   command=lambda: self.Buttonfunc_Suchen(SearchEntries[0].get(),SearchEntries[1].get(),SearchEntries[2].get(),vocables.vocables,FoundEntries)).grid(row=5,column=1,columnspan=2)
-
-
         self.ButtonLayout = "MainScreen"
         tk.Button(self.frameButtons, text="Zurück zum Hauptmenü", font=self.fontLayout, command=self.Create_Buttons).pack()
     def Buttonfunc_Suchen(self, deutsch, spanisch, kommentar, vokabeln, FoundEntries):
-        #todo this needs much more stuff
-        ID = CM.ChangeManagement(deutsch, spanisch, kommentar, vokabeln)
-        if ID == []:
-            tk.Label(self.frame[1], text="Eintrag nicht gefunden", font=self.fontLayout, anchor="w", fg="RED").grid(row=6, column=1,columnspan=2, sticky="W")
-        elif len(ID)>1:
-            tk.Label(self.frame[1], text=str(len(ID)) + " Einträge gefunden", font=self.fontLayout, anchor="w", fg="RED").grid(row=6, column=1,columnspan=2, sticky="W")
-            deutsch0 = ""
-            for word in vocables.vocables[ID[0]]["deutsch"]:
-                deutsch0 = deutsch0 + word + ","
-            deutsch0 = deutsch0[:-1]
-            FoundEntries[0].delete(0,"end")
-            FoundEntries[0].insert(0,deutsch0)
-            spanisch0 = ""
-            for word in vocables.vocables[ID[0]]["spanisch"]:
-                spanisch0 = spanisch0 + word + ","
-            spanisch0 = spanisch0[:-1]
-            FoundEntries[1].delete(0,"end")
-            FoundEntries[1].insert(0,spanisch0)
-            kommentar0 = ""
-            for word in vocables.vocables[ID[0]]["kommentar"]:
-                kommentar0 = kommentar0 + word + ","
-            kommentar0 = kommentar0[:-1]
-            FoundEntries[2].delete(0,"end")
-            FoundEntries[2].insert(0,kommentar0)
-
-
-        for i in ID:
-            print(vokabeln[i]["deutsch"])
-
-
-
-
+        CM.AddVokabeln(vokabeln)
+        CM.Search(deutsch, spanisch, kommentar)
+        if CM.IDs == []:
+            tk.Label(self.frame[1], text="Eintrag nicht gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
+        elif len(CM.IDs)>1:
+            tk.Label(self.frame[1], text=str(len(CM.IDs)) + " Einträge gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
+            CM.display(FoundEntries)
+    def Buttonfunc_CM_save(self, FoundEntries):
+        i=0
+        for key in ["deutsch", "spanisch", "kommentar"]:
+            content = FoundEntries[i].get().split(",")
+            if key != "kommentar":
+                for word in content:
+                    if len(word) > 0:
+                        while word[0] == " ":
+                            word = word[1:]
+                        while word[-1] == " ":
+                            word = word[:-1]
+            FoundEntries[i].delete(0, "end")
+            i += 1
+            vocables.vocables[CM.IDs[CM.idx]][key] = content
 
 
     def Buttonfunc_Continue(self):
@@ -495,24 +482,23 @@ class GUI_control:
         MyGUI.Create_Buttons()
 
     def Buttonfunc_Save_Restart(self):
-        if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
-            with open(self.path[:-3] + "json", 'w', encoding='UTF8') as fp:
-                json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
-        elif self.path[-4:] == "json":
-            with open(self.path, 'w', encoding='UTF8') as fp:
-                json.dump(vocables.vocables, fp, sort_keys=True, indent=4)
+        self.Buttonfunc_saving()
         self.restart = True
         self.root.destroy()
 
 
     def Buttonfunc_Save_Exit(self):
+        self.Buttonfunc_saving()
+        self.root.destroy()
+
+    def Buttonfunc_saving(self):
         if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
             with open(self.path[:-3] + "json", 'w', encoding='UTF8') as fp:
                 json.dump(vocables.vocables, fp)
         elif self.path[-4:] == "json":
             with open(self.path, 'w', encoding='UTF8') as fp:
                 json.dump(vocables.vocables, fp)
-        self.root.destroy()
+
 
 
 class C_selection:
@@ -546,28 +532,30 @@ def ParseTxt_toDicts(path):
     file_content = file.readlines()
     for id in range(len(file_content)):
         strings = file_content[id].split("\t")
-        # format german strings to get single german entries
-        stringsDeutsch = strings[0].split(",")
-        try:
-            stringsDeutsch.remove("2x")
-        except ValueError:
-            pass
-        if stringsDeutsch[-1] == "":
-            del stringsDeutsch[-1]
-        # format spanish string to get single entries
-        stringsSpanisch = strings[1]
-        stringsSpanisch = stringsSpanisch.strip().split(
-            ",")  # the strip cmd removes trailing \n, which couldn't get removed by other means
-        for id2 in range(len(stringsSpanisch)):  # check and add single "a" to previous entry b/c its just declanation
-            if stringsSpanisch[id2] == "a":
-                stringsSpanisch[id2 - 1] = stringsSpanisch[id2 - 1] + ",a"
-        while "a" in stringsSpanisch: stringsSpanisch.remove("a")
-        if stringsSpanisch[-1] == "":
-            del stringsSpanisch[-1]
-        stringsKommentar = strings[2].strip()
-        print(stringsKommentar)
-        ListOfDicts.append({"spanisch": stringsSpanisch, "deutsch": stringsDeutsch,
-                            "answers": {}, "kommentar": stringsKommentar})
+        if len(strings) == 3:
+            # format german strings to get single german entries
+            stringsDeutsch = strings[0].split(",")
+            try:
+                stringsDeutsch.remove("2x")
+            except ValueError:
+                pass
+            if stringsDeutsch[-1] == "":
+                del stringsDeutsch[-1]
+            # format spanish string to get single entries
+            stringsSpanisch = strings[1]
+            stringsSpanisch = stringsSpanisch.strip().split(
+                ",")  # the strip cmd removes trailing \n, which couldn't get removed by other means
+            for id2 in range(len(stringsSpanisch)):  # check and add single "a" to previous entry b/c its just declanation
+                if stringsSpanisch[id2] == "a":
+                    stringsSpanisch[id2 - 1] = stringsSpanisch[id2 - 1] + ",a"
+            while "a" in stringsSpanisch: stringsSpanisch.remove("a")
+            if stringsSpanisch[-1] == "":
+                del stringsSpanisch[-1]
+            stringsKommentar = strings[2].strip()
+            ListOfDicts.append({"spanisch": stringsSpanisch, "deutsch": stringsDeutsch,
+                                "answers": {}, "kommentar": stringsKommentar})
+        else:
+            print("There is an Issue with your .TSV: Number of columns != 3")
     return (ListOfDicts)
 
 def InitializeOldData(path):
@@ -627,6 +615,7 @@ MyGUI.restart = False
 vocables = C_vocables([])
 Selector = C_selection()
 MyGUI.Create_Buttons()
+CM = ChangeManagement()
 MyGUI.root.mainloop()
 while MyGUI.restart:
     del MyGUI
