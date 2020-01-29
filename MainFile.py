@@ -11,12 +11,15 @@ read_old_data = 0
 
 ### Um das JSON File schön zu formatieren, folgende Variable auf 1 setzen.
 ### (ohne schöne Formatierung lässt sich erheblich Speicherplatz sparen)
-nice_JSON = 1
+nice_JSON = 0
 
 #compile via console in folder containing MainFile.py --> pyinstaller -F MainFile.py
 
 #todo abschlussauswertung am ende --> anzahl der beantwortetetn vokabeln & Anzahl der Antworten zeigen
 #todo immer 6 Antwortfelder geben <-- erstmal lassen
+
+#todo aufgetretene Probleme:
+#todo Beim erstmaligen durchgehen der fälligen Vokabeln eines neues JSON files wird vor der letzten Vokabel abgebrochen
 
 IntervalMatrix = []
 IntervalMatrix.append([	0	,	0	,	1	,	1	,	1	])
@@ -86,10 +89,11 @@ class C_vocables:
             self.vocables[id]["answers"][user]["correctness"].append("Richtig")
             MyGUI.user_answers.append("Richtig")
             MyGUI.user_answers_idx.append(Selector.idx)
-        elif CorrectInstance2 == 0:
+        else:
             self.vocables[id]["answers"][user]["correctness"].append("Falsch")
             MyGUI.user_answers.append("Falsch")
             MyGUI.user_answers_idx.append(Selector.idx)
+            print("Wrong Answer given to vocabel >> " + self.vocables[id]["deutsch"][0] + " << ID: " + str(id))
 
     def NextTime(self, id, user, AddedInterval):
         if MyGUI.mode == "nach Fälligkeit":
@@ -124,6 +128,7 @@ class GUI_control:
         self.user = ""
         self.user_answers = []
         self.user_answers_idx = []
+        self.user_answers_NumVocables = -1
         self.width = 20
         self.height = 1
         self.mode = []
@@ -240,6 +245,7 @@ class GUI_control:
             self.root.unbind("<Return>")
 
     def Buttonfunc_RemoveUserEntry(self):
+        print("Tipp fehler aufgetreten, letzte Eingabe wird rausgenommen!")
         MyGUI.user_answers[-1] = "Richtig"
         vocables.vocables[Selector.idx]["answers"][MyGUI.user]["correctness"][-1] = "Richtig"
         self.Button_RemoveUserEntry.destroy()
@@ -457,16 +463,24 @@ class GUI_control:
             widget.destroy()
         for widget in MyGUI.frame[0].winfo_children():
             widget.destroy()
+        if self.user_answers_NumVocables < 0:
+            self.user_answers_NumVocables = len(MyGUI.user_answers)
         tk.Label(self.frame[0], text=str(self.user) + ",", font=("Helvetica", 30)).pack()
         tk.Label(self.frame[0], text="du hast in dieser Session insgesamt ").pack()
-        tk.Label(self.frame[0], text=str(len(MyGUI.user_answers)), font=("Helvetica", 30)).pack()
+        tk.Label(self.frame[0], text=str(self.user_answers_NumVocables), font=("Helvetica", 30)).pack()
         tk.Label(self.frame[0], text=" Vokabeln beantwortet!").pack()
-        tk.Label(self.frame[0], text="Davon waren:").pack()
+        tk.Label(self.frame[0], text="Im letzten Durchgang waren:").pack()
         tk.Label(self.frame[0],
                  text=str(len([i for i, x in enumerate(MyGUI.user_answers) if x == "Richtig"])) + " richtig und",
                  justify="left", anchor="w").pack()
         tk.Label(self.frame[0],
                  text=str(len([i for i, x in enumerate(MyGUI.user_answers) if x == "Falsch"])) + " falsch").pack()
+        tk.Label(self.frame[0], text="Das hier war der " + str(len(Selector.Entities)-1) + ". Durchgang.").pack()
+        repeatedVocs = self.user_answers_NumVocables
+        if len(Selector.Entities) > 1:
+            for i in range(2,len(Selector.Entities)):
+                repeatedVocs = repeatedVocs + len(Selector.Entities[i])
+        tk.Label(self.frame[0], text="Insgesamt hast du " + str(repeatedVocs) + " Fragen beantwortet.").pack()
         self.ButtonLayout = 5
         if Selector.listID==0:
             vocables.vocables[0][self.user]["last_stop"] = Selector.idx
@@ -474,6 +488,7 @@ class GUI_control:
 
     def Buttonfunc_Repeat_Wrong_Answers(self):
         New_Indexes = []
+        print("Started to answer wrong vocables from the previous go-through")
         for i in range(len(self.user_answers)):
             if (self.user_answers[i] == "Falsch") and self.mode == "nach Fälligkeit" :
                 New_Indexes.append(self.user_answers_idx[i])
@@ -482,6 +497,11 @@ class GUI_control:
             elif (self.user_answers[i] == "Falsch") and (Selector.listID > 1):
                 New_Indexes.append(self.user_answers_idx[i])
         self.MaxNumVocables=len(New_Indexes)
+        print("List of IDs that have been answered in the past round:")
+        print(self.user_answers_idx)
+        self.user_answers_idx = []
+        print("List of IDs corresponding to false answers:")
+        print(New_Indexes)
         Selector.IDs=-1
         Selector.NumbersOfEnteties(New_Indexes)
         self.user_answers=[]
@@ -522,7 +542,9 @@ class C_selection:
         self.IDs = -1 # das hier ist einfach ein zähler
         self.idx = -1   # das hier ist der entsprechende index nach der korrelationsliste, die in Entities abelegt werden kann/soll
                         # --> Entities[1] enthält die indices der fälligen vokabeln
-        self.listID = 1
+        self.listID = 1 # listID 1 corresponds to mode "nach Fälligkeit"
+                        # listID 0 corresponds to mode "nach Reihenfolge"
+                        # listID > 1 corresponds to additional runs through wrong answered vocables
         self.Entities = []
 
     def NumbersOfEnteties(self, NumberOfEnteties):
@@ -530,6 +552,8 @@ class C_selection:
 
     def NextEntity(self):
         self.IDs += 1
+        print("About to ask next ListID " + str(self.listID) + " with the " + str(self.IDs) + "th entry")
+        print("The current List of IDs contains " + str(len(self.Entities[self.listID])) + " Elements")
         if MyGUI.mode == "nach Reihenfolge" and self.listID == 1:
             self.IDs = vocables.vocables[0][MyGUI.user]["last_stop"]
             self.listID = 0
@@ -540,6 +564,7 @@ class C_selection:
         if MyGUI.mode == "nach Reihenfolge" and self.IDs >=len(self.Entities[0]):
             self.IDs = 0
         self.idx = self.Entities[self.listID][self.IDs]
+        print("Asking vocable >> " + vocables.vocables[self.idx]["deutsch"][0] + " << at ID " + str(self.idx))
 
 
 def ParseTxt_toDicts(path):
