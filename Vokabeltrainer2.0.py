@@ -113,7 +113,7 @@ class MyGUI:
             self.MaxNumVocables.pack()
 
             self.btn_SelectLecture = tk.Button(MyGUI.frameButtons, text="Lektion auswählen", font=self.fontLayout,
-                                           command=self.Buttonfunc_SelectLecture)
+                                               command=self.Buttonfunc_LoadData)
             self.btn_SelectLecture.pack()
             if read_old_data == 1:
                 tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
@@ -139,12 +139,13 @@ class MyGUI:
     def Buttonfunc_Continue(self):
         pass
 
+    def Buttonfunc_LoadData(self):
+        self.path, self.vocables = functions.SelectLecture(filedialog.askopenfilename())
+        self.Create_Buttons()
+
     def Buttonfunc_ReadOldData(self):
         pass
 
-    def Buttonfunc_SelectLecture(self):
-        self.path, self.vocables = functions.SelectLecture(filedialog.askopenfilename())
-        self.Create_Buttons()
 
 
 MyGUI = MyGUI()
