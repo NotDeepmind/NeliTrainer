@@ -135,6 +135,7 @@ class GUI_control:
         self.RadioBtns = {}
         self.RadioBtns["errors"]=[]
         self.MaxNumVocables = []
+        self.SelectLecture = tk.Button(self.frameButtons, text="Lektion auswählen", font=self.fontLayout,command=self.Buttonfunc_SelectLecture)
 
     def Create_Buttons(self):
         for widget in self.frameButtons.winfo_children():
@@ -193,7 +194,8 @@ class GUI_control:
             for widget in self.frame[1].winfo_children():
                 widget.destroy()
             self.RadioBtnsContents=[]
-            tk.Label(self.frame[0], text = "Benutzerauswahl:", font = self.fontLayout).pack(anchor = "w", ipadx = 10)
+            self.testLabel = tk.Label(self.frame[0], text = "Benutzerauswahl:", font = self.fontLayout)
+            self.testLabel.pack(anchor = "w", ipadx = 10)
             self.RadioBtns["user selection"] = tk.StringVar(self.frame[0],value="x")
             optionlist = ["Andreas", "Christa", "Gemeinsam"]
             for option in optionlist:
@@ -224,6 +226,7 @@ class GUI_control:
 
             self.SelectLecture = tk.Button(MyGUI.frameButtons, text="Lektion auswählen", font=self.fontLayout,
                                            command=MyGUI.Buttonfunc_SelectLecture)
+            testsequence = self.SelectLecture
             self.SelectLecture.pack()
             if read_old_data == 1:
                 tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
@@ -660,11 +663,19 @@ def InitializeOldData(path):
 
 
 MyGUI = GUI_control()
+def testfunc(testsequence):
+    if testsequence.widgetName == "button":
+        testsequence.invoke()
+    #MyGUI.root.after(1000, testfunc(testsequence))
+
+testsequence = MyGUI.SelectLecture
+
 MyGUI.restart = False
 vocables = C_vocables([])
 Selector = C_selection()
 MyGUI.Create_Buttons()
 CM = ChangeManagement()
+MyGUI.root.after(1000, testfunc, testsequence)
 MyGUI.root.mainloop()
 while MyGUI.restart:
     del MyGUI

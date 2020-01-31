@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
 import json
-import C_vocables
+import C_vocables, C_selection
 from datetime import datetime as dt
 import datetime as dtt
 import os as os
@@ -11,7 +11,7 @@ from ChangeManagement import ChangeManagement
 
 
 
-def SelectLecture(path):
+def LoadData(path, Selector):
     ListOfObjects = []
     if path != "":
         if path[-3:] == "txt" or path[-3:] == "tsv":
@@ -25,7 +25,8 @@ def SelectLecture(path):
                 vocablesDict = json.load(json_file)
     for entry in vocablesDict:
         ListOfObjects.append(C_vocables.C_vocables(entry))
-    return path, ListOfObjects
+    Selector.NumbersOfEnteties(range(len(ListOfObjects)))
+    return path, ListOfObjects, Selector
 
 def ParseTxt_toDicts(path):
     ListOfDicts = []
@@ -59,6 +60,20 @@ def ParseTxt_toDicts(path):
             print("There is an Issue with your .TSV: Number of columns != 3")
     return (ListOfDicts)
 
+def Userselection(user, vocables, Selector):
+    ### Check for due vocables
+    if user not in vocables[0].content:
+        vocables[0].content[user] = {}
+        vocables[0].content[user]["last_stop"] = 0
+    List_Due_Vocables = []
+    for i in range(len(vocables)):
+        try:
+            if dt.today() >= dt.strptime(vocables[i].content["answers"][user]["NextTime"], "%Y-%m-%d"):
+                List_Due_Vocables.append(i)
+        except:
+            pass
+    Selector.NumbersOfEnteties(List_Due_Vocables)
+    return vocables, Selector
 
 
 
