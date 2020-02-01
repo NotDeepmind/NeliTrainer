@@ -508,7 +508,6 @@ class GUI_control:
         Selector.IDs=-1
         Selector.NumbersOfEnteties(New_Indexes)
         self.user_answers=[]
-        self.user2_answers=[]
         Selector.listID=len(Selector.Entities)-1
         self.Buttonfunc_NextVocable()
         MyGUI.ButtonLayout = 1
