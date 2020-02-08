@@ -122,6 +122,23 @@ def Repeat_Wrong_Answers(answers, answers_idxs, selector):
     answers_idxs = []
     return answers, answers_idxs, selector, len(New_indexes)
 
+def saving(path, vocables, nice_JSON):
+    vocable_list = []
+    for vocable in vocables:
+        vocable_list.append(vocable.content)
+    if path[-3:] == "txt" or path[-3:] == "tsv":
+        with open(path[:-3] + "json", 'w', encoding='UTF8') as fp:
+            if nice_JSON == 1:
+                json.dump(vocable_list, fp, indent=4)
+            else:
+                json.dump(vocable_list, fp)
+    elif path[-4:] == "json":
+        with open(path, 'w', encoding='UTF8') as fp:
+            if nice_JSON == 1:
+                json.dump(vocable_list, fp, indent=4)
+            else:
+                json.dump(vocable_list, fp)
+
 def Userselection(user, vocables, Selector):
     ### Check for due vocables
     if user not in vocables[0].content:

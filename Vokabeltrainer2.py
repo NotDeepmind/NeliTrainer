@@ -181,7 +181,7 @@ class MyGUI:
             RadioBtnsContents[-1].pack(side='top', anchor='w', ipadx=30)
 
     def Buttonfunc_AddDelay(self, delay):
-        self.vocables[self.Selector.idx].AddDelay(self.user, delay)
+        self.vocables[self.Selector.idx].AddDelay(self.user, delay, self.mode)
         if len(self.user_answers) >= self.MaxNumVocables:
             self.Buttonfunc_EndSession()
         else:
@@ -305,7 +305,8 @@ class MyGUI:
         self.Create_Buttons("AskVocable")
 
     def Buttonfunc_Save_Exit(self):
-        pass
+        functions.saving(self.path, self.vocables,1)
+        self.root.destroy()
 
     def Buttonfunc_Save_Restart(self):
         pass

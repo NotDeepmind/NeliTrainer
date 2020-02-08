@@ -5,9 +5,10 @@ class C_vocables:
     def __init__(self, VocabelEntry):
         self.content = VocabelEntry
 
-    def AddDelay(self, user, delay):
+    def AddDelay(self, user, delay, mode):
         TimeToAskAgain = dt.today() + dtt.timedelta(days=delay)
-        self.content["answers"][user]["NextTime"] = TimeToAskAgain.strftime("%Y-%m-%d")
+        if mode == "nach Fälligkeit":
+            self.content["answers"][user]["NextTime"] = TimeToAskAgain.strftime("%Y-%m-%d")
         self.content["answers"][user]["delay"].append(delay)
 
     def report(self):

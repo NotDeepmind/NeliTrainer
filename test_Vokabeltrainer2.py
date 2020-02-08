@@ -109,7 +109,12 @@ class MyTestCase(unittest.TestCase):
         self.Check_EndSession_Labels(MyGUI, ["Andreas,", "4", "1 richtig und", "0 falsch", "Das hier war der 4. Durchgang.", "Insgesamt hast du 9 Fragen beantwortet."])
         widgets = MyGUI.frameButtons.winfo_children()
         self.assertNotEqual(widgets[0].cget("text"), "Falsche Antworten wiederholen") #Repeat wrong answers button should have disappeared here
-
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Andreas", "deutsch", "nach Fälligkeit", 10, MyGUI)
+        widgets = MyGUI.frame[1].winfo_children()
+        self.assertEqual(widgets[5].cget("text"), "Keine Vokabeln für heute fällig!") #Check if on restart, all "fällige" vocables are correctly checked
         MyGUI.root.destroy()
 
     def test_Andreas_spanisch_Reihenfolge(self):
@@ -177,8 +182,10 @@ class MyTestCase(unittest.TestCase):
             ["#50AA50", "#50AA50"],
             "Andreas"
         )
-
-        MyGUI.root.destroy()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
 
     def test_Christa_spanisch_Fällgikeit(self):
         """
@@ -211,19 +218,10 @@ class MyTestCase(unittest.TestCase):
             1,
             "Christa"
         )
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
         #here one vocable has to be skipped compared to "Andreas" List
-        self.Questionare_Fälligkeit(
-            MyGUI,
-            ["sTest4-4F-A", "sTest4-4F-B", "sTest4-4F-C", "sTest4-4F-D", "", "Dies ist Vokabel 3/3 der Session"],
-            4,
-            ["#"],
-            ["dTest4-4F-A", "dTest4-4F-B", "dTest4-4F-C", "dTest4-4F-D"],
-            ["#50AA50","#50AA50","#50AA50","#50AA50"],
-            [61, 1, 30],
-            2,
-            "Christa"
-        )
-        self.Check_EndSession_Labels(MyGUI, ["Christa,", "3", "2 richtig und", "1 falsch", "Das hier war der 1. Durchgang.", "Insgesamt hast du 3 Fragen beantwortet."])
+        self.Check_EndSession_Labels(MyGUI, ["Christa,", "2", "1 richtig und", "1 falsch", "Das hier war der 1. Durchgang.", "Insgesamt hast du 2 Fragen beantwortet."])
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[0].invoke()
         self.Questionare_Fälligkeit(
@@ -237,11 +235,27 @@ class MyTestCase(unittest.TestCase):
             1,
             "Christa"
         )
-        self.Check_EndSession_Labels(MyGUI, ["Christa,", "3", "1 richtig und", "0 falsch", "Das hier war der 2. Durchgang.", "Insgesamt hast du 4 Fragen beantwortet."])
+        self.Check_EndSession_Labels(MyGUI, ["Christa,", "2", "1 richtig und", "0 falsch", "Das hier war der 2. Durchgang.", "Insgesamt hast du 3 Fragen beantwortet."])
         widgets = MyGUI.frameButtons.winfo_children()
         self.assertNotEqual(widgets[0].cget("text"), "Falsche Antworten wiederholen") #Repeat wrong answers button should have disappeared here
-
-        MyGUI.root.destroy()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Christa", "spanisch", "nach Fälligkeit", 10, MyGUI)
+        self.Questionare_Fälligkeit(
+            MyGUI,
+            ["sTest4-4F-A", "sTest4-4F-B", "sTest4-4F-C", "sTest4-4F-D", "", "Dies ist Vokabel 1/1 der Session"],
+            4,
+            ["dTest1-3F"],
+            ["dTest4-4F-A", "dTest4-4F-B", "dTest4-4F-C", "dTest4-4F-D"],
+            ["#FF0000", "#FF0000", "#FF0000", "#FF0000"],
+            [61, 1, 30],
+            1,
+            "Christa"
+        )
+        MyGUI.root.mainloop()
+ # close
+        #todo leave one "fällige" unanswered and check on reload if the vocable is found correctly
 
     def test_Christa_deutsch_Reihenfolge(self):
         """
@@ -287,7 +301,8 @@ class MyTestCase(unittest.TestCase):
             ["#50AA50", "#50AA50", "#50AA50", "#50AA50"],
             "Christa"
         )
-        MyGUI.root.mainloop()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
 
 
 
@@ -350,12 +365,12 @@ class MyTestCase(unittest.TestCase):
         NewDate = dt.today() + dtt.timedelta(delays[delay_idx])
         self.assertEqual(GUI.vocables[current_idx].content["answers"][user]["NextTime"], NewDate.strftime("%Y-%m-%d"), msg=NewDate.strftime("%Y-%m-%d"))
     def Questionare_Reihenfolge(self, GUI, Labels_Presented, no_of_entries, Entries, results, colors, user):
+        current_idx = int(GUI.Selector.idx)
+        correct_NextTime = GUI.vocables[current_idx].content["answers"][user]["NextTime"]
         self.Questionare_basic(GUI, Labels_Presented, no_of_entries, Entries, results, colors, user)
         widgets = GUI.frameButtons.winfo_children()
-        current_idx = int(GUI.Selector.idx)
         widgets[0].invoke()
-        NewDate = dt.today() + dtt.timedelta(-1)
-        self.assertEqual(GUI.vocables[current_idx].content["answers"][user]["NextTime"], NewDate.strftime("%Y-%m-%d"))
+        self.assertEqual(GUI.vocables[current_idx].content["answers"][user]["NextTime"], correct_NextTime) # make sure the "NextTime" Entry did not change after answering (must change only in "Fälligkeit" mode)
 
 
 
