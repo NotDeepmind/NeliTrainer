@@ -6,7 +6,7 @@ import datetime as dtt
 exec(open("./CreateTestData.py").read())
 
 class MyTestCase(unittest.TestCase):
-    def test_Andreas_Fälligkeit(self):
+    def test_Andreas_deutsch_Fälligkeit(self):
         """
         Testing Inputs:
             - All Inputs are presented correctly
@@ -24,29 +24,21 @@ class MyTestCase(unittest.TestCase):
             - The NewDate for next question seem to be correct
         Testing EndSession Screen:
             - All shown counters are correct
+            - Successive identifies the wrong answers correctly
+            - Repeating wrong vocables presents the correct vocables
         """
         MyGUI = VT.MyGUI()
-        MyGUI.testmode = True
-        MyGUI.Create_Buttons()
-        widgets = MyGUI.frameButtons.winfo_children()
-        self.assertEqual(widgets[0].cget("text"), "Lektion auswählen") #Choose Lecture at right position
-        widgets[0].invoke()
-        widgets = MyGUI.frameButtons.winfo_children()
-        self.assertEqual(widgets[0].cget("text"), "Weiter") #continue button found
-        MyGUI.RadioBtns["mode"].set("nach Fälligkeit")
-        MyGUI.RadioBtns["language"].set("deutsch")
-        MyGUI.RadioBtns["user selection"].set("Andreas")
-        widgets[0].invoke() #starting questionare of "fällige" vocables
-        #MyGUI.root.mainloop()
+        self.Questionare_Startup("Andreas", "deutsch", "nach Fälligkeit", 10, MyGUI)
         self.Questionare_Fälligkeit(
             MyGUI,
-            ["dTest1-1F", "", "Kommentar: testKommentar", "Dies ist Vokabel 1/4 der Session"],
+            ["dTest1-1F", "", "Kommentar: erste fällig", "Dies ist Vokabel 1/4 der Session"],
             1,
             ["sTest1-1F"],
             ["sTest1-1F"],
             ["#50AA50"],
             [2, 1, 1],
-            0
+            0,
+            "Andreas"
         )
         self.Questionare_Fälligkeit(
             MyGUI,
@@ -56,17 +48,19 @@ class MyTestCase(unittest.TestCase):
             ["sTest3-1F-A", "sTest3-1F-B", "sTest3-1F-C"],
             ["#FF0000", "#50AA50", "#FF0000"],
             [6, 1, 3],
-            1
+            1,
+            "Andreas"
         )
         self.Questionare_Fälligkeit(
             MyGUI,
-            ["dTest2-1F-A", "dTest2-1F-B", "", "Dies ist Vokabel 3/4 der Session"],
+            ["dTest2-1F-A", "dTest2-1F-B", "", "Kommentar: nur fällig bei Andreas", "Dies ist Vokabel 3/4 der Session"],
             1,
             [""],
             ["sTest1-2F"],
             ["#FF0000"],
             [15, 1, 7],
-            2
+            2,
+            "Andreas"
         )
         self.Questionare_Fälligkeit(
             MyGUI,
@@ -76,7 +70,8 @@ class MyTestCase(unittest.TestCase):
             ["sTest4-4F-A", "sTest4-4F-B", "sTest4-4F-C", "sTest4-4F-D"],
             ["#50AA50", "#50AA50", "#50AA50", "#50AA50"],
             [61, 1, 30],
-            0
+            0,
+            "Andreas"
         )
         self.Check_EndSession_Labels(MyGUI, ["Andreas,", "4", "2 richtig und", "2 falsch", "Das hier war der 1. Durchgang.", "Insgesamt hast du 4 Fragen beantwortet."])
         widgets = MyGUI.frameButtons.winfo_children()
@@ -115,7 +110,187 @@ class MyTestCase(unittest.TestCase):
         widgets = MyGUI.frameButtons.winfo_children()
         self.assertNotEqual(widgets[0].cget("text"), "Falsche Antworten wiederholen") #Repeat wrong answers button should have disappeared here
 
-        #MyGUI.root.mainloop()
+        MyGUI.root.destroy()
+
+    def test_Andreas_spanisch_Reihenfolge(self):
+        """
+        Testing expands the "nach Fälligkeit"
+        Inputs:
+            - Check Inputs of the right vokabels
+            - Check correctly starting at the first vocable
+            - Check corrects continuation after full list is finished
+            - Check correct counters during first cycle (location in list of all vocables) and during second cycle (no location in  list of all vocables)
+        Outputs:
+            - Check correct number of Entry fields
+            - Check "#" Wildcard all correct
+        EndSession:
+            - Check correct screen for first, second and third cycle
+            - check correct number of vocables, number of answers, corrects and falses
+        RepeatWrongAnswers:
+            - Check the correct inputs during second cycle
+            - Check correctly ignoring correct answers from previous cycle, also from first to second cycle
+        """
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Andreas", "spanisch", "nach Reihenfolge", 10, MyGUI)
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["sTest1-1R", "", "Kommentar: Erster Eintrag", "Dies ist Vokabel 1/10 der Session", "bzw. 1/8 der Datenbank"],
+            1,
+            ["dTest1-1R"],
+            ["dTest1-1R"],
+            ["#50AA50"],
+            "Andreas"
+        )
+        self.Questionare_SkipEntryReihenfolge(7, MyGUI) #just skip the 7 in between and check if first reappears properly
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["sTest1-1R", "", "Kommentar: Erster Eintrag", "Dies ist Vokabel 9/10 der Session", "bzw. 1/8 der Datenbank"],
+            1,
+            ["#"],
+            ["dTest1-1R"],
+            ["#50AA50"],
+            "Andreas"
+        )
+        self.Questionare_SkipEntryReihenfolge(1, MyGUI)
+        self.Check_EndSession_Labels(MyGUI, ["Andreas,", "10", "2 richtig und", "8 falsch", "Das hier war der 1. Durchgang.", "Insgesamt hast du 10 Fragen beantwortet."])
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["sTest3-1R-A", "sTest3-1R-B", "sTest3-1R-C", "", "Kommentar: testKommentar", "Dies ist Vokabel 1/8 der Session"],
+            1,
+            ["dTest1-3R"],
+            ["dTest1-3R"],
+            ["#50AA50"],
+            "Andreas"
+        )
+        self.Questionare_SkipEntryReihenfolge(7, MyGUI)
+        self.Check_EndSession_Labels(MyGUI, ["Andreas,", "10", "1 richtig und", "7 falsch", "Das hier war der 2. Durchgang.", "Insgesamt hast du 18 Fragen beantwortet."])
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["sTest1-2R", "", "Dies ist Vokabel 1/7 der Session"],
+            2,
+            ["#"],
+            ["dTest2-1R-A", "dTest2-1R-B"],
+            ["#50AA50", "#50AA50"],
+            "Andreas"
+        )
+
+        MyGUI.root.destroy()
+
+    def test_Christa_spanisch_Fällgikeit(self):
+        """
+        Expand testing from "Andreas" cases
+            - Check correct inputs
+            - Check correct counters, here being one less compared to "Andreas"
+            - Check if answering works properly, delays are chosen correctly and set correctly
+        """
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Christa", "spanisch", "nach Fälligkeit", 10, MyGUI)
+        self.Questionare_Fälligkeit(
+            MyGUI,
+            ["sTest1-1F", "", "Kommentar: erste fällig", "Dies ist Vokabel 1/3 der Session"],
+            1,
+            ["dTest1-1F"],
+            ["dTest1-1F"],
+            ["#50AA50"],
+            [2, 1, 1],
+            0,
+            "Christa"
+        )
+        self.Questionare_Fälligkeit(
+            MyGUI,
+            ["sTest3-1F-A", "sTest3-1F-B", "sTest3-1F-C", "", "Kommentar: testKommentar", "Dies ist Vokabel 2/3 der Session"],
+            1,
+            ["dTest1-1G"],
+            ["dTest1-3F"],
+            ["#FF0000"],
+            [6, 1, 3],
+            1,
+            "Christa"
+        )
+        #here one vocable has to be skipped compared to "Andreas" List
+        self.Questionare_Fälligkeit(
+            MyGUI,
+            ["sTest4-4F-A", "sTest4-4F-B", "sTest4-4F-C", "sTest4-4F-D", "", "Dies ist Vokabel 3/3 der Session"],
+            4,
+            ["#"],
+            ["dTest4-4F-A", "dTest4-4F-B", "dTest4-4F-C", "dTest4-4F-D"],
+            ["#50AA50","#50AA50","#50AA50","#50AA50"],
+            [61, 1, 30],
+            2,
+            "Christa"
+        )
+        self.Check_EndSession_Labels(MyGUI, ["Christa,", "3", "2 richtig und", "1 falsch", "Das hier war der 1. Durchgang.", "Insgesamt hast du 3 Fragen beantwortet."])
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        self.Questionare_Fälligkeit(
+            MyGUI,
+            ["sTest3-1F-A", "sTest3-1F-B", "sTest3-1F-C", "", "Kommentar: testKommentar", "Dies ist Vokabel 1/1 der Session"],
+            1,
+            ["dTest1-3F"],
+            ["dTest1-3F"],
+            ["#50AA50"],
+            [2, 1, 1],
+            1,
+            "Christa"
+        )
+        self.Check_EndSession_Labels(MyGUI, ["Christa,", "3", "1 richtig und", "0 falsch", "Das hier war der 2. Durchgang.", "Insgesamt hast du 4 Fragen beantwortet."])
+        widgets = MyGUI.frameButtons.winfo_children()
+        self.assertNotEqual(widgets[0].cget("text"), "Falsche Antworten wiederholen") #Repeat wrong answers button should have disappeared here
+
+        MyGUI.root.destroy()
+
+    def test_Christa_deutsch_Reihenfolge(self):
+        """
+        Additional testing of "nach Reihenfolge" for second user
+        inputs:
+            - Checking that starting occurs at the correct index (vocable 4, as last_stop == 2 marks the last answered ID of a vocable (remember python starts counting at 0))
+            - Double Checking all the requirements when asking in sequence
+
+        Checking if session can be finished properly before reaching the set limit number of vocables
+        :return:
+        """
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Christa", "deutsch", "nach Reihenfolge", 3, MyGUI)
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["dTest4-4R-A", "dTest4-4R-B", "dTest4-4R-C", "dTest4-4R-D", "", "Dies ist Vokabel 1/3 der Session", "bzw. 4/8 der Datenbank"],
+            4,
+            [""],
+            ["sTest4-4R-A", "sTest4-4R-B", "sTest4-4R-C", "sTest4-4R-D"],
+            ["#FF0000", "#FF0000", "#FF0000", "#FF0000"],
+            "Christa"
+        )
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["dTest1-1F", "", "Kommentar: erste fällig", "Dies ist Vokabel 2/3 der Session", "bzw. 5/8 der Datenbank"],
+            1,
+            ["sTest1-1F"],
+            ["sTest1-1F"],
+            ["#50AA50"],
+            "Christa"
+        )
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        self.Check_EndSession_Labels(MyGUI, ["Christa,", "2", "1 richtig und", "1 falsch", "Das hier war der 1. Durchgang.", "Insgesamt hast du 2 Fragen beantwortet."])
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["dTest4-4R-A", "dTest4-4R-B", "dTest4-4R-C", "dTest4-4R-D", "", "Dies ist Vokabel 1/1 der Session"],
+            4,
+            ["#"],
+            ["sTest4-4R-A", "sTest4-4R-B", "sTest4-4R-C", "sTest4-4R-D"],
+            ["#50AA50", "#50AA50", "#50AA50", "#50AA50"],
+            "Christa"
+        )
+        MyGUI.root.mainloop()
+
+
+
 
     def Check_EndSession_Labels(self, GUI, labels):
         widgets = GUI.frame[0].winfo_children()
@@ -127,7 +302,26 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(widgets[8].cget("text"), labels[5])
 
 
-    def Questionare_Fälligkeit(self, GUI, Labels_Presented, no_of_entries, Entries, results, colors, delays, delay_idx):
+    def Questionare_Startup(self, user, language, mode, no, GUI):
+        GUI.testmode = True
+        GUI.Create_Buttons("MainScreen")
+        widgets = GUI.frameButtons.winfo_children()
+        self.assertEqual(widgets[0].cget("text"), "Lektion auswählen") #Choose Lecture at right position
+        widgets[0].invoke()
+        widgets = GUI.frameButtons.winfo_children()
+        self.assertEqual(widgets[0].cget("text"), "Weiter") #continue button found
+        GUI.RadioBtns["mode"].set(mode)
+        GUI.RadioBtns["language"].set(language)
+        GUI.RadioBtns["user selection"].set(user)
+        GUI.ET_MaxNumVocables.insert(0, str(no))
+        widgets = GUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+
+    def Questionare_SkipEntryReihenfolge(self, no, GUI):
+        for i in range(2*no):
+            widgets = GUI.frameButtons.winfo_children()
+            widgets[0].invoke()
+    def Questionare_basic(self, GUI, Labels_Presented, no_of_entries, Entries, results, colors, user):
         widgets = GUI.frame[0].winfo_children()
         for widget, label in zip(widgets, Labels_Presented):
             self.assertEqual(widget.cget("text"), label) #correct data presented
@@ -145,6 +339,8 @@ class MyTestCase(unittest.TestCase):
                 self.assertEqual(widget.cget("text"), results[i])
                 self.assertEqual(widget.cget("fg"), colors[i])
                 i += 1
+    def Questionare_Fälligkeit(self, GUI, Labels_Presented, no_of_entries, Entries, results, colors, delays, delay_idx, user):
+        self.Questionare_basic(GUI, Labels_Presented, no_of_entries, Entries, results, colors, user)
         widgets = GUI.Frame_Buttons_delay.winfo_children()
         for widget, delay in zip(widgets, delays):
             self.assertEqual(widget.cget("text"), "+" + str(delay) + "Tage")
@@ -152,7 +348,15 @@ class MyTestCase(unittest.TestCase):
         current_idx = int(GUI.Selector.idx)
         widgets[delay_idx].invoke()
         NewDate = dt.today() + dtt.timedelta(delays[delay_idx])
-        self.assertEqual(GUI.vocables[current_idx].content["answers"]["Andreas"]["NextTime"], NewDate.strftime("%Y-%m-%d"))
+        self.assertEqual(GUI.vocables[current_idx].content["answers"][user]["NextTime"], NewDate.strftime("%Y-%m-%d"), msg=NewDate.strftime("%Y-%m-%d"))
+    def Questionare_Reihenfolge(self, GUI, Labels_Presented, no_of_entries, Entries, results, colors, user):
+        self.Questionare_basic(GUI, Labels_Presented, no_of_entries, Entries, results, colors, user)
+        widgets = GUI.frameButtons.winfo_children()
+        current_idx = int(GUI.Selector.idx)
+        widgets[0].invoke()
+        NewDate = dt.today() + dtt.timedelta(-1)
+        self.assertEqual(GUI.vocables[current_idx].content["answers"][user]["NextTime"], NewDate.strftime("%Y-%m-%d"))
+
 
 
 

@@ -154,7 +154,7 @@ class MyGUI:
                 self.root.bind("<Return>", lambda event: Buttons[0].invoke())
             elif self.mode == "nach Reihenfolge":
                 self.btn_NextVocable = tk.Button(self.frameButtons, text="Nächste Vokabel", command=lambda: self.Buttonfunc_AddDelay(-1), font=self.fontLayout, height=self.height, width=self.width)
-                self.btn_NextVocable.grid(row=0, column=2)
+                self.btn_NextVocable.grid(row=1, column=1)
                 self.root.bind("<Return>",lambda event: self.btn_NextVocable.invoke())
             self.Button_RemoveUserEntry = tk.Button(self.frameButtons, text="Tippfehler", font=self.fontLayout, width=self.width, height=self.height,  command=self.Buttonfunc_RemoveUserEntry)
             self.Button_RemoveUserEntry.grid(row=3, column=1)
@@ -166,6 +166,7 @@ class MyGUI:
                     break
             tk.Button(self.frameButtons, text="Speichern & Neustarten", font=self.fontLayout, width=2 * self.width, height=self.height, command=self.Buttonfunc_Save_Restart).grid(row=4, column=2)
             tk.Button(self.frameButtons, text="Speichern & Beenden", font=self.fontLayout, width=2 * self.width, height=self.height, command=self.Buttonfunc_Save_Exit).grid(row=5, column=2)
+            self.root.unbind("<Return>")
 
 
     def AddLabel(self, parent, text):
@@ -280,7 +281,7 @@ class MyGUI:
         tk.Label(self.frame[0], font=self.fontLayout,
                  text="Dies ist Vokabel " + str(1 + len(self.user_answers)) + "/" + str(self.MaxNumVocables) + " der Session").pack()
         if self.Selector.listID == 0: # Abfragen nach Reihenfolge
-            tk.Label(MyGUI.frame[0], font=self.fontLayout,
+            tk.Label(self.frame[0], font=self.fontLayout,
                      text="bzw. " + str(self.Selector.idx + 1) + "/" + str(
                          len(self.Selector.Entities[self.Selector.listID])) + " der Datenbank").pack()
         self.Create_Buttons("AskVocable")

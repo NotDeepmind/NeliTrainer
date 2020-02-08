@@ -6,8 +6,8 @@ import datetime as dtt
 TestData = []
 NextTime = dt.today() + dtt.timedelta(1)
 TestData.append({
-        "spanisch": ["sTest1-1R"], "deutsch": ["dTest1-1R"], "kommentar": "testKommentar",
-        "Andreas": {"last_stop": 0}, "Christa": {"last_stop": 0},
+        "spanisch": ["sTest1-1R"], "deutsch": ["dTest1-1R"], "kommentar": "Erster Eintrag",
+        "Andreas": {"last_stop": 8}, "Christa": {"last_stop": 2},
         "answers": {
             "Andreas": {"datetime": [""], "answer": [""], "delay": [100], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")},
             "Christa": {"datetime": [""], "answer": [""], "delay": [100], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")}
@@ -39,7 +39,7 @@ TestData.append({
     })
 NextTime = dt.today() + dtt.timedelta(0)
 TestData.append({
-        "spanisch": ["sTest1-1F"], "deutsch": ["dTest1-1F"], "kommentar": "testKommentar",
+        "spanisch": ["sTest1-1F"], "deutsch": ["dTest1-1F"], "kommentar": "erste fällig",
         "answers": {
             "Andreas": {"datetime": [""], "answer": [""], "delay": [1], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")},
             "Christa": {"datetime": [""], "answer": [""], "delay": [1], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")}
@@ -56,7 +56,7 @@ TestData.append({
 NextTime = dt.today() + dtt.timedelta(-7)
 NextTime2 = dt.today() + dtt.timedelta(+7)
 TestData.append({
-        "spanisch": ["sTest1-2F"], "deutsch": ["dTest2-1F-A", "dTest2-1F-B"], "kommentar": "",
+        "spanisch": ["sTest1-2F"], "deutsch": ["dTest2-1F-A", "dTest2-1F-B"], "kommentar": "nur fällig bei Andreas",
         "answers": {
             "Andreas": {"datetime": [""], "answer": [""], "delay": [7], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")},
             "Christa": {"datetime": [""], "answer": [""], "delay": [7], "correctness": ["Richtig"], "NextTime": NextTime2.strftime("%Y-%m-%d")}
@@ -70,5 +70,5 @@ TestData.append({
             "Christa": {"datetime": [""], "answer": [""], "delay": [30], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")}
         }
     })
-with open(os.path.dirname(os.path.abspath(__file__)) + "\Testdata.json", 'w', encoding='UTF8') as fp:
-    json.dump(TestData, fp, indent=4)
+with open(os.path.dirname(os.path.abspath(__file__)) + "\Testdata.json", 'w') as fp:
+    json.dump(TestData, fp, indent=4, ensure_ascii=False)

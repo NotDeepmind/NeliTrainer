@@ -37,7 +37,7 @@ def EndSession(answers, num_vocables, selector, num_total, vocable0, user):
     falses = str(len([i for i, x in enumerate(answers) if x == "Falsch"]))
     num_total += len(answers)
     if selector.listID == 0:
-        vocable0[user]["last_stop"] = selector.idx
+        vocable0.content[user]["last_stop"] = selector.idx
     return num_vocables, corrects, falses, num_total, vocable0
 
 def intervals(vocable, IntervalMatrix, user):
