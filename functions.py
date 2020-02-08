@@ -139,6 +139,15 @@ def saving(path, vocables, nice_JSON):
             else:
                 json.dump(vocable_list, fp)
 
+def tippfehler(vocable, user, answers):
+    vocable.content["answers"][user]["correctness"][-1] = "Richtig"
+    vocable.content["answers"][user]["answer"][-1][0] = "Tippfehler gemacht"
+    if len(vocable.content["answers"][user]["answer"][-1]) > 1:
+        for id in range(1,len(vocable.content["answers"][user]["answer"][-1])):
+            vocable.content["answers"][user]["answer"][-1][id] = ""
+    answers[-1] = "Richtig"
+    return vocable, answers
+
 def Userselection(user, vocables, Selector):
     ### Check for due vocables
     if user not in vocables[0].content:

@@ -40,16 +40,17 @@ IntervalMatrix.append([	151	,	180	,	180	,	1	,	90	])
 
 class MyGUI:
     def __init__(self):
+        self.restart = 0
         self.root = tk.Tk(className=" Nehls'scher Vokabeltrainer")
-        self.canvas = tk.Canvas(self.root, height=500, width=900)
+        self.canvas = tk.Canvas(self.root, height=700, width=900)
         self.canvas.pack()
         self.frame = []
         self.frame.append(tk.Frame(self.root))
-        self.frame[0].place(relwidth=0.5, height=300)
+        self.frame[0].place(relwidth=0.5, height=500)
         self.frame.append(tk.Frame(self.root))
-        self.frame[1].place(relwidth=0.5, height=300, relx=0.5)
+        self.frame[1].place(relwidth=0.5, height=500, relx=0.5)
         self.frameButtons = tk.Frame(self.root)
-        self.frameButtons.place(relwidth=1, height=160, rely=300 / (300 + 160))
+        self.frameButtons.place(relwidth=1, height=200, rely=500 / (500 + 200))
         self.ET_Answer = []
         self.label_presented=[]
         self.fontLayout = ("Helvetica", "18")
@@ -156,8 +157,8 @@ class MyGUI:
                 self.btn_NextVocable = tk.Button(self.frameButtons, text="Nächste Vokabel", command=lambda: self.Buttonfunc_AddDelay(-1), font=self.fontLayout, height=self.height, width=self.width)
                 self.btn_NextVocable.grid(row=1, column=1)
                 self.root.bind("<Return>",lambda event: self.btn_NextVocable.invoke())
-            self.Button_RemoveUserEntry = tk.Button(self.frameButtons, text="Tippfehler", font=self.fontLayout, width=self.width, height=self.height,  command=self.Buttonfunc_RemoveUserEntry)
-            self.Button_RemoveUserEntry.grid(row=3, column=1)
+            self.Btn_Tippfehler = tk.Button(self.frameButtons, text="Tippfehler", font=self.fontLayout, width=self.width, height=self.height,  command=self.Buttonfunc_Tippfehler)
+            self.Btn_Tippfehler.grid(row=3, column=1)
         ####################################################################################################################################
         elif self.ButtonLayout == "EndSession":
             for i in range(len(self.user_answers)):
@@ -296,9 +297,6 @@ class MyGUI:
     def Buttonfunc_ReadOldData(self):
         pass
 
-    def Buttonfunc_RemoveUserEntry(self):
-        pass
-
     def Buttonfunc_Repeat_Wrong_Answers(self):
         self.user_answers, self.user_answers_idx, self.Selector, self.MaxNumVocables = functions.Repeat_Wrong_Answers(self.user_answers, self.user_answers_idx, self.Selector)
         self.Buttonfunc_NextVocable()
@@ -309,14 +307,26 @@ class MyGUI:
         self.root.destroy()
 
     def Buttonfunc_Save_Restart(self):
-        pass
+        functions.saving(self.path, self.vocables,1)
+        self.restart = 1
+        self.root.destroy()
+
+    def Buttonfunc_Tippfehler(self):
+        self.vocables[self.Selector.idx], self.user_answers = functions.tippfehler(self.vocables[self.Selector.idx], self.user, self.user_answers)
+        self.Btn_Tippfehler.destroy()
 
 
 
 if __name__ == "__main__":
-    MyGUI = MyGUI()
-    MyGUI.Create_Buttons("MainScreen")
-    MyGUI.root.mainloop()
+    GUI = MyGUI()
+    GUI.restart = 1
+    GUI.root.destroy()
+    while GUI.restart == 1:
+        del GUI
+        GUI = MyGUI()
+        GUI.Create_Buttons("MainScreen")
+        GUI.root.mainloop()
+
 
 
 

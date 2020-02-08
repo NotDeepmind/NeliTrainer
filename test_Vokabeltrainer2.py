@@ -134,6 +134,8 @@ class MyTestCase(unittest.TestCase):
         RepeatWrongAnswers:
             - Check the correct inputs during second cycle
             - Check correctly ignoring correct answers from previous cycle, also from first to second cycle
+        Saving:
+            - Check if all "fällige" vocables are checked correctly and when restarting no "fällige" are found and program doesn't continue to questioning
         """
         MyGUI = VT.MyGUI()
         self.Questionare_Startup("Andreas", "spanisch", "nach Reihenfolge", 10, MyGUI)
@@ -193,6 +195,8 @@ class MyTestCase(unittest.TestCase):
             - Check correct inputs
             - Check correct counters, here being one less compared to "Andreas"
             - Check if answering works properly, delays are chosen correctly and set correctly
+            - Check if premature ending the session works properly
+            - Check if one leftout vocable is correctly asked when starting again
         """
         MyGUI = VT.MyGUI()
         self.Questionare_Startup("Christa", "spanisch", "nach Fälligkeit", 10, MyGUI)
@@ -240,6 +244,7 @@ class MyTestCase(unittest.TestCase):
         self.assertNotEqual(widgets[0].cget("text"), "Falsche Antworten wiederholen") #Repeat wrong answers button should have disappeared here
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
+        #start over and do the one missing, because the session before was ended before reaching 3/3
         MyGUI = VT.MyGUI()
         self.Questionare_Startup("Christa", "spanisch", "nach Fälligkeit", 10, MyGUI)
         self.Questionare_Fälligkeit(
@@ -253,19 +258,20 @@ class MyTestCase(unittest.TestCase):
             1,
             "Christa"
         )
-        MyGUI.root.mainloop()
- # close
+        MyGUI.root.destroy() # leave one "fällig" open
+
         #todo leave one "fällige" unanswered and check on reload if the vocable is found correctly
 
     def test_Christa_deutsch_Reihenfolge(self):
         """
         Additional testing of "nach Reihenfolge" for second user
         inputs:
-            - Checking that starting occurs at the correct index (vocable 4, as last_stop == 2 marks the last answered ID of a vocable (remember python starts counting at 0))
+            - Checking that starting occurs at the correct index (vocable 4, as last_stop == 3 marks the next ID of a vocable (remember python starts counting at 0))
             - Double Checking all the requirements when asking in sequence
+        Saving:
+            - Check if after closing the "Reihenfolge" Session, and restarting, the list of vocables is continued at the correct position
 
         Checking if session can be finished properly before reaching the set limit number of vocables
-        :return:
         """
         MyGUI = VT.MyGUI()
         self.Questionare_Startup("Christa", "deutsch", "nach Reihenfolge", 3, MyGUI)
@@ -303,6 +309,56 @@ class MyTestCase(unittest.TestCase):
         )
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
+        #check after savong and restarting that the correct next vocable is shown
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Christa", "deutsch", "nach Reihenfolge", 3, MyGUI)
+        self.Questionare_Reihenfolge(
+            MyGUI,
+            ["dTest1-3F", "","Kommentar: testKommentar", "Dies ist Vokabel 1/3 der Session"],
+            3,
+            ["#"],
+            ["sTest3-1F-A", "sTest3-1F-B", "sTest3-1F-C"],
+            ["#50AA50", "#50AA50", "#50AA50"],
+            "Christa"
+        )
+        MyGUI.root.destroy()
+
+    def test_Tippfehler(self):
+        """
+        Check if the "Tippfehler" button works as intended "nach Reihenfolge" and "nach Fällgikeit"
+        """
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Christa", "spanisch", "nach Fälligkeit", 3, MyGUI)
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[2].invoke() # mark as tippfehler
+        self.assertEqual(MyGUI.vocables[MyGUI.Selector.idx].content["answers"][MyGUI.user]["correctness"][-1], "Richtig")
+        self.assertEqual(MyGUI.vocables[MyGUI.Selector.idx].content["answers"][MyGUI.user]["answer"][-1][0], "Tippfehler gemacht")
+        widgets = MyGUI.Frame_Buttons_delay.winfo_children()
+        widgets[0].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Andreas", "deutsch", "nach Reihenfolge", 3, MyGUI)
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke() # mark as tippfehler
+        self.assertEqual(MyGUI.vocables[MyGUI.Selector.idx].content["answers"][MyGUI.user]["correctness"][-1], "Richtig")
+        self.assertEqual(MyGUI.vocables[MyGUI.Selector.idx].content["answers"][MyGUI.user]["answer"][-1][0], "Tippfehler gemacht")
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+
+
+
+
+
 
 
 

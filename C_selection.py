@@ -15,7 +15,7 @@ class C_selection:
         #initiate correctly depending on mode
         if self.IDs == -1 and mode == "nach Reihenfolge" and len(self.Entities) == 2:
             self.listID = 0
-            self.IDs = last_stop
+            self.IDs = last_stop - 1
         elif self.IDs == -1 and mode == "nach Fälligkeit" and len(self.Entities) == 2:
             self.listID = 1
             self.IDs = -1
