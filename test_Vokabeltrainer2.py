@@ -184,10 +184,12 @@ class MyTestCase(unittest.TestCase):
             ["#50AA50", "#50AA50"],
             "Andreas"
         )
+        MyGUI.root.mainloop()
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
+        #todo check if a new start of the saved file starts at the correct vocable
 
     def test_Christa_spanisch_Fällgikeit(self):
         """
@@ -260,13 +262,12 @@ class MyTestCase(unittest.TestCase):
         )
         MyGUI.root.destroy() # leave one "fällig" open
 
-        #todo leave one "fällige" unanswered and check on reload if the vocable is found correctly
 
     def test_Christa_deutsch_Reihenfolge(self):
         """
         Additional testing of "nach Reihenfolge" for second user
         inputs:
-            - Checking that starting occurs at the correct index (vocable 4, as last_stop == 3 marks the next ID of a vocable (remember python starts counting at 0))
+            - Checking that starting occurs at the correct index (the forth vocable of the list, as last_stop == 2 marks the next ID of the LAST answered vocable (remember python starts counting at 0))
             - Double Checking all the requirements when asking in sequence
         Saving:
             - Check if after closing the "Reihenfolge" Session, and restarting, the list of vocables is continued at the correct position

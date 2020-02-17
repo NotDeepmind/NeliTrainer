@@ -244,8 +244,12 @@ class MyGUI:
             self.Buttonfunc_NextVocable()
 
     def Buttonfunc_EndSession(self):
+        if len(self.user_answers) < self.MaxNumVocables:
+            self.Selector.idx = self.user_answers_idx[-1] # go back to last idx, because the function is called AFTER the next vocable is loaded, but unanswered yet
+        print("Ended the Session of " + self.user + " in mode " + self.mode + " at index " + str(self.Selector.idx)) #probably this is set also when wrongs get repeated
         self.user_answers_NumVocables, corrects, falses, self.user_answers_total, self.vocables[0] = functions.EndSession(self.user_answers, self.user_answers_NumVocables, self.Selector, self.user_answers_total,
                                                                                                                        self.vocables[0], self.user)
+        #todo remove the last_stop entry from here and put it into the "check answer" function for both modes
         for frame in self.frame:
             for widget in frame.winfo_children():
                 widget.destroy()

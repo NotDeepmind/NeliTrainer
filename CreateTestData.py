@@ -7,7 +7,7 @@ TestData = []
 NextTime = dt.today() + dtt.timedelta(1)
 TestData.append({
         "spanisch": ["sTest1-1R"], "deutsch": ["dTest1-1R"], "kommentar": "Erster Eintrag",
-        "Andreas": {"last_stop": 0}, "Christa": {"last_stop": 3},
+        "Andreas": {"last_stop": 8}, "Christa": {"last_stop": 2},
         "answers": {
             "Andreas": {"datetime": [""], "answer": [""], "delay": [100], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")},
             "Christa": {"datetime": [""], "answer": [""], "delay": [100], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")}
