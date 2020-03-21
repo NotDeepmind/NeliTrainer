@@ -11,7 +11,7 @@ from ChangeManagement import ChangeManagement
 
 
 
-def CheckEntry(Answers, vocable, requested, user):
+def CheckEntry(Answers, vocable, requested, user, selector, vocable0):
     RecentAnswer = []
     label_colors = []
     for Answer in Answers:
@@ -28,17 +28,17 @@ def CheckEntry(Answers, vocable, requested, user):
                 label_colors.append("#FF0000") #no combination matched --> wrong Answer
     vocable.EnterResults(RecentAnswer, CorrectInstance2, user)
     correctness = vocable.content["answers"][user]["correctness"][-1]
-    return vocable, label_colors, correctness
+    if selector.listID == 0:
+        vocable0.content[user]["last_stop"] = selector.idx
+    return vocable, label_colors, correctness, vocable0
 
-def EndSession(answers, num_vocables, selector, num_total, vocable0, user):
+def EndSession(answers, num_vocables, num_total):
     if num_vocables < 0:
         num_vocables = len(answers)
     corrects = str(len([i for i, x in enumerate(answers) if x == "Richtig"]))
     falses = str(len([i for i, x in enumerate(answers) if x == "Falsch"]))
     num_total += len(answers)
-    if selector.listID == 0:
-        vocable0.content[user]["last_stop"] = selector.idx
-    return num_vocables, corrects, falses, num_total, vocable0
+    return num_vocables, corrects, falses, num_total
 
 def intervals(vocable, IntervalMatrix, user):
     LastDelaysList = list(vocable.content["answers"][user]["delay"])

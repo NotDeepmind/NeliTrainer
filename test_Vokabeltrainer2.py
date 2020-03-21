@@ -184,12 +184,37 @@ class MyTestCase(unittest.TestCase):
             ["#50AA50", "#50AA50"],
             "Andreas"
         )
-        MyGUI.root.mainloop()
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
-        #todo check if a new start of the saved file starts at the correct vocable
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Andreas", "spanisch", "nach Reihenfolge", 3, MyGUI)
+        self.Questionare_Reihenfolge(   # last_stop from first part was set and recognized correctly. Just did 10 answers, starting at vocable 1, going through a full 8 and 2 more leaves us now at vocable 3.
+            MyGUI,
+            ["sTest1-2R", "", "Dies ist Vokabel 1/3 der Session", "bzw. 3/8 der Datenbank"],
+            2,
+            ["#"],
+            ["dTest2-1R-A", "dTest2-1R-B"],
+            ["#50AA50", "#50AA50"],
+            "Andreas"
+        )
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup("Andreas", "spanisch", "nach Reihenfolge", 3, MyGUI)
+        self.Questionare_Reihenfolge(   # last_stop from second run was set correctly, as we wanted to answer 3 vocables but ended the session early after the first answer, leaving us at vocable 4
+            MyGUI,
+            ["sTest4-4R-A", "sTest4-4R-B", "sTest4-4R-C", "sTest4-4R-D", "", "Dies ist Vokabel 1/3 der Session", "bzw. 4/8 der Datenbank"],
+            4,
+            ["#"],
+            ["dTest4-4R-A", "dTest4-4R-B", "dTest4-4R-C", "dTest4-4R-D"],
+            ["#50AA50", "#50AA50", "#50AA50", "#50AA50"],
+            "Andreas"
+        )
+       # MyGUI.root.mainloop()
 
     def test_Christa_spanisch_Fällgikeit(self):
         """
