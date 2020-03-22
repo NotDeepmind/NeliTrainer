@@ -3,7 +3,8 @@ import Vokabeltrainer2 as VT
 from datetime import datetime as dt
 import datetime as dtt
 
-exec(open("./CreateTestData.py").read())
+with open("./CreateTestData.py") as DataCreation:
+    exec(DataCreation.read())
 
 class MyTestCase(unittest.TestCase):
     def test_Andreas_deutsch_Fälligkeit(self):
@@ -381,6 +382,70 @@ class MyTestCase(unittest.TestCase):
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
 
+    def test_ChangeManagement(self):
+        """
+        Testing the ChangeManagement here, giving the option to search and change entries
+        - Searching function is rested for deutsch and kommentar entries
+        - correct results are tested for the search, next and previous function buttons (including when pushing next at the end of list and vice versa for previous)
+        - saving of changed entries is checked
+            > input entries in deutsch and spanisch are properly separated into a list of strings split by ","
+            > starting or trailing spaces are removed properly
+            > entry is saved for the current session and in file, reloading database remembers the changed entry correctly
+        """
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup_LoadData(MyGUI)
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        widgets_left = MyGUI.frame[0].winfo_children()
+        widgets_left[2].insert(0,"4-4")
+        widgets_left[7].invoke()
+        self.assertEqual(MyGUI.FoundEntries[0].get(), "dTest4-4R-A, dTest4-4R-B, dTest4-4R-C, dTest4-4R-D", "Seach for german Entry did not show correct result")
+        widgets_right = MyGUI.frame[1].winfo_children()
+        widgets_right[7].invoke() # next result
+        self.assertEqual(MyGUI.FoundEntries[0].get(), "dTest4-4F-A, dTest4-4F-B, dTest4-4F-C, dTest4-4F-D", "Next Result is not shown corectly after search")
+        widgets_right[7].invoke() # next result
+        self.assertEqual(MyGUI.FoundEntries[0].get(), "dTest4-4R-A, dTest4-4R-B, dTest4-4R-C, dTest4-4R-D", "Next Result is not shown properly after reaching the first result again")
+        widgets_left[2].delete(0,"end")
+        widgets_left[6].insert(0,"test") # testing search for kommentar
+        widgets_left[7].invoke()
+        self.assertEqual(MyGUI.FoundEntries[1].get(), "sTest3-1R-A, sTest3-1R-B, sTest3-1R-C", "Searching for kommentar did not yield the correct result or spanisch is not shown properly")
+        self.assertEqual(MyGUI.FoundEntries[2].get(), "testKommentar", "Searching for kommentar did not yield the correct result or kommentar is not shown properly")
+        widgets_left[6].delete(0,"end")
+        widgets_left[2].insert(0,"Test") # search for Test in german field, should give 8 results
+        widgets_left[7].invoke()
+        widgets_right[8].invoke() # previous result
+        self.assertEqual(MyGUI.FoundEntries[0].get(), "dTest4-4F-A, dTest4-4F-B, dTest4-4F-C, dTest4-4F-D", "Previous Results is not shown properly (at least when cycling through the full result list, " +
+                                                                                                            "going from first results to the last)")
+        MyGUI.FoundEntries[0].delete(0, "end")
+        MyGUI.FoundEntries[0].insert(0, "new_german, new_german2")
+        MyGUI.FoundEntries[1].delete(0, "end")
+        MyGUI.FoundEntries[1].insert(0, "new_spanish, new_spanish2")
+        MyGUI.FoundEntries[2].delete(0, "end")
+        MyGUI.FoundEntries[2].insert(0, "new_comment")
+        widgets_right[9].invoke() # save
+        widgets_left[2].delete(0,"end")
+        widgets_left[2].insert(0,"new_german") # search for Test in german field, should give 8 results
+        widgets_left[7].invoke()
+        self.assertEqual(MyGUI.vocables[-1].content["deutsch"][0], "new_german", "Changed Entry is not set correctly in MyGUI.vocables")
+        self.assertEqual(MyGUI.FoundEntries[1].get(), "new_spanish, new_spanish2", "Changed Entry is not found or not shown correctly")
+        MyGUI.root.destroy()
+        #reload the data to check if changes are saved correctly in the file
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup_LoadData(MyGUI)
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        widgets_left = MyGUI.frame[0].winfo_children()
+        widgets_left[2].insert(0,"new_german") # search for Test in german field, should give 8 results
+        widgets_left[7].invoke()
+        self.assertEqual(MyGUI.vocables[-1].content["deutsch"][0], "new_german", "Changed Entry is not set correctly in MyGUI.vocables after reloading the database")
+        self.assertEqual(MyGUI.FoundEntries[1].get(), "new_spanish, new_spanish2", "Changed Entry is not found after reloading of database")
+        MyGUI.root.destroy()
+        #restore the original data file
+        with open("./CreateTestData.py") as DataCreation:
+            exec(DataCreation.read())
+
+
+        #print(widgets_right[2].get())
 
 
 
@@ -398,13 +463,14 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(widgets[7].cget("text"), labels[4])
         self.assertEqual(widgets[8].cget("text"), labels[5])
 
-
-    def Questionare_Startup(self, user, language, mode, no, GUI):
+    def Questionare_Startup_LoadData(self, GUI):
         GUI.testmode = True
         GUI.Create_Buttons("MainScreen")
         widgets = GUI.frameButtons.winfo_children()
         self.assertEqual(widgets[0].cget("text"), "Lektion auswählen") #Choose Lecture at right position
         widgets[0].invoke()
+    def Questionare_Startup(self, user, language, mode, no, GUI):
+        self.Questionare_Startup_LoadData(GUI)
         widgets = GUI.frameButtons.winfo_children()
         self.assertEqual(widgets[0].cget("text"), "Weiter") #continue button found
         GUI.RadioBtns["mode"].set(mode)

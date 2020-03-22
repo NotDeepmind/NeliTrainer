@@ -4,7 +4,7 @@ import json
 from datetime import datetime as dt
 import datetime as dtt
 import os as os
-from ChangeManagement import ChangeManagement
+from ChangeManagement import ChangeManagement as CM
 import functions
 import C_selection
 
@@ -192,7 +192,71 @@ class MyGUI:
         pass
 
     def Buttonfunc_ChangeManagement(self):
-        pass
+        #todo implement the search and change correctly and write test cases
+        self.SearchResults = CM()
+        for widget in self.frameButtons.winfo_children():
+            widget.destroy()
+        for widget in self.frame[0].winfo_children():
+            widget.destroy()
+        for widget in self.frame[1].winfo_children():
+            widget.destroy()
+        tk.Label(self.frame[0], text="SUCHE:",font=self.fontLayout).grid(row=1, column=1)
+        Attributes = ["Deutsch:", "Spanisch:", "Kommentar:"]
+        i = 0
+        SearchEntries=[]
+        for item in Attributes:
+            i += 1
+            tk.Label(self.frame[0], text=item, font=self.fontLayout, anchor="w").grid(row=i+1, column=1, sticky="W")
+            SearchEntries.append(tk.Entry(self.frame[0], font=self.fontLayout))
+            SearchEntries[-1].grid(row=i+1, column=2)
+        tk.Label(self.frame[1], text="Gefunden:").grid(row=1, column=1)
+        i = 0
+        self.FoundEntries=[]
+        for item in Attributes:
+            i += 1
+            tk.Label(self.frame[1], text=item, font=self.fontLayout, anchor="w").grid(row=i*2, column=1, sticky="W")
+            self.FoundEntries.append(tk.Entry(self.frame[1], font=self.fontLayout, width=30))
+            self.FoundEntries[-1].grid(row=2*i+1, column=1, columnspan=2)
+        tk.Button(self.frame[1], text="Nächstes", font=self.fontLayout,
+                  command= lambda: self.Buttonfunc_CM_next(self.FoundEntries)).grid(row=8,column=2, sticky="W")
+        tk.Button(self.frame[1], text="Vorheriges", font=self.fontLayout,
+                  command= lambda: self.Buttonfunc_CM_previous(self.FoundEntries)).grid(row=8,column=1, sticky="E")
+        tk.Button(self.frame[1], text="Speichern", font=self.fontLayout,
+                  command=lambda: self.Buttonfunc_CM_save(self.FoundEntries)).grid(row=9,column=1,columnspan=2)
+        tk.Button(self.frame[0], text="Suchen", font=self.fontLayout,
+                  command=lambda: self.Buttonfunc_CM_search(SearchEntries[0].get(),SearchEntries[1].get(),SearchEntries[2].get(), self.vocables, self.FoundEntries)).grid(row=5,column=1,columnspan=2)
+        self.ButtonLayout = "MainScreen"
+        tk.Button(self.frameButtons, text="Zurück zum Hauptmenü", font=self.fontLayout, command=self.Create_Buttons).pack()
+    def Buttonfunc_CM_next(self, ResultFields):
+        self.SearchResults.next()
+        self.CM_refreshResults(ResultFields)
+    def Buttonfunc_CM_previous(self, ResultFields):
+        self.SearchResults.previous()
+        self.CM_refreshResults(ResultFields)
+    def Buttonfunc_CM_save(self, ResultFields):
+        self.SearchResults.ChangedEntries(ResultFields[0].get(), ResultFields[1].get(), ResultFields[2].get())
+        for key in ["deutsch", "spanisch", "kommentar"]:
+            self.vocables[self.SearchResults.IDs[self.SearchResults.idx]].content[key] = self.SearchResults.NewEntry[key]
+        for field in ResultFields:
+            field.delete(0, "end")
+        functions.saving(self.path, self.vocables,1)
+
+    def Buttonfunc_CM_search(self, deutsch, spanisch, kommentar, vocables, ResultFields):
+        self.SearchResults.Search(deutsch, spanisch, kommentar, vocables)
+        if len(self.SearchResults.IDs) == 0:
+            tk.Label(self.frame[1], text="Eintrag nicht gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
+        self.CM_refreshResults(ResultFields)
+    def CM_refreshResults(self, ResultFields):
+        if len(self.SearchResults.IDs) > 0:
+            for field in ResultFields:
+                field.delete(0, "end")
+            ResultFields[0].insert(0, self.SearchResults.OrigEntires[self.SearchResults.idx]["deutsch"])
+            ResultFields[1].insert(0, self.SearchResults.OrigEntires[self.SearchResults.idx]["spanisch"])
+            ResultFields[2].insert(0, self.SearchResults.OrigEntires[self.SearchResults.idx]["kommentar"])
+
+
+
+
 
     def Buttonfunc_CheckEntry(self):
         self.vocables[self.Selector.idx], label_colors, correctness, self.vocables[0] = functions.CheckEntry(self.ET_Answer, self.vocables[self.Selector.idx], self.requested, self.user, self.Selector, self.vocables[0])

@@ -70,5 +70,5 @@ TestData.append({
             "Christa": {"datetime": [""], "answer": [""], "delay": [30], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")}
         }
     })
-with open(os.path.dirname(os.path.abspath(__file__)) + "\Testdata.json", 'w') as fp:
+with open(os.path.dirname(os.path.abspath(__file__)) + r"\Testdata.json", 'w') as fp:
     json.dump(TestData, fp, indent=4, ensure_ascii=False)

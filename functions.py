@@ -83,7 +83,7 @@ def ParseTxt_toDicts(path):
     file = open(path, "r+", encoding='utf-8')
     file_content = file.readlines()
     for id in range(len(file_content)):
-        strings = file_content[id].split("\t")
+        strings = file_content[id].split(r"\t")
         if len(strings) == 3:
             # format german strings to get single german entries
             stringsDeutsch = strings[0].split(",")
