@@ -2,6 +2,7 @@ import unittest
 import Vokabeltrainer2 as VT
 from datetime import datetime as dt
 import datetime as dtt
+import os
 
 with open("./CreateTestData.py") as DataCreation:
     exec(DataCreation.read())
@@ -115,7 +116,7 @@ class MyTestCase(unittest.TestCase):
         MyGUI = VT.MyGUI()
         self.Questionare_Startup("Andreas", "deutsch", "nach Fälligkeit", 10, MyGUI)
         widgets = MyGUI.frame[1].winfo_children()
-        self.assertEqual(widgets[5].cget("text"), "Keine Vokabeln für heute fällig!") #Check if on restart, all "fällige" vocables are correctly checked
+        self.assertEqual(widgets[7].cget("text"), "Keine Vokabeln für heute fällig!") #Check if on restart, all "fällige" vocables are correctly checked
         MyGUI.root.destroy()
 
     def test_Andreas_spanisch_Reihenfolge(self):
@@ -215,7 +216,7 @@ class MyTestCase(unittest.TestCase):
             ["#50AA50", "#50AA50", "#50AA50", "#50AA50"],
             "Andreas"
         )
-       # MyGUI.root.mainloop()
+        MyGUI.root.destroy()
 
     def test_Christa_spanisch_Fällgikeit(self):
         """
@@ -444,15 +445,70 @@ class MyTestCase(unittest.TestCase):
         with open("./CreateTestData.py") as DataCreation:
             exec(DataCreation.read())
 
+    def test_TSV_export(self):
+        """
+        Testing the TSV export functionality with the full test database
+        loading the first and last line and checking if that is formatted as expected (deutsch, spanisch, kommentar)
+        """
+        Path_exported_TSV = os.path.dirname(os.path.abspath(__file__)) + r"\Testdata_export.tsv"
+        if os.path.isfile(Path_exported_TSV):
+            os.remove(Path_exported_TSV) #delete old TSV if one exists
+        MyGUI = VT.MyGUI()
+        self.Questionare_Startup_LoadData(MyGUI)
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[4].invoke() #export as TSV
+        with open(Path_exported_TSV, "r+", encoding='utf-8') as source:
+            file_content = source.readlines()
+        for i, line in zip(range(len(file_content)), file_content):
+            file_content[i] = line[:-1] #removes the trailing \n from every line
+        self.assertEqual(file_content[0], "dTest1-1R, 	sTest1-1R, 	Erster Eintrag", "At least the first line of the database was not exported properly to the TSV file.")
+        self.assertEqual(file_content[-1], "dTest4-4F-A, dTest4-4F-B, dTest4-4F-C, dTest4-4F-D, 	sTest4-4F-A, sTest4-4F-B, sTest4-4F-C, sTest4-4F-D, 	", "At least the last line of the database was not exported "
+                                                                                                                                                               "properly to the TSV file.")
 
-        #print(widgets_right[2].get())
+    def test_AddfromTSV(self):
+        """
+        Testing the import function from TSV to integrate new vocable lists into the database
+        > loading of the Testdata_import.tsv example set
+        > Check that the fällige vocables for user Christa didnt change
+        > repeat the process the check that duplicate entries are found correctly
+        > check that the fällige vocables for user Andreas changed correctly, adding a new entry for the day
+        > restore original database at the end
+        """
 
-
-
-
-
-
-
+        MyGUI = VT.MyGUI()
+        MyGUI.path_AddVocables = os.path.dirname(os.path.abspath(__file__)) + r"\Testdata_import.tsv"
+        self.Questionare_Startup_LoadData(MyGUI)
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[2].invoke()
+        MyGUI.RadioBtns["mode"].set("nach Fälligkeit")
+        MyGUI.RadioBtns["language"].set("spanisch")
+        MyGUI.RadioBtns["user selection"].set("Christa")
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        widgets = MyGUI.frame[0].winfo_children()
+        self.assertEqual(widgets[3].cget("text"), "Dies ist Vokabel 1/3 der Session", "Christa has more >fällige< vocables, probably some error in adding of TSV file")
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[1].invoke()
+        del MyGUI
+        MyGUI = VT.MyGUI()
+        MyGUI.path_AddVocables = os.path.dirname(os.path.abspath(__file__)) + r"\Testdata_import.tsv"
+        self.Questionare_Startup_LoadData(MyGUI)
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[2].invoke()
+        MyGUI.RadioBtns["mode"].set("nach Fälligkeit")
+        MyGUI.RadioBtns["language"].set("spanisch")
+        MyGUI.RadioBtns["user selection"].set("Andreas")
+        widgets = MyGUI.frameButtons.winfo_children()
+        widgets[0].invoke()
+        widgets = MyGUI.frame[0].winfo_children()
+        self.assertNotEqual(widgets[4].cget("text"), "Dies ist Vokabel 1/4 der Session", "The added Entry from the TSC file was not recognized properly")
+        self.assertNotEqual(widgets[4].cget("text"), "Dies ist Vokabel 1/6 der Session", "The entry from the import TSV was taking twice, checking of dublicate entries did not work, error in adding of TSV files")
+        self.assertEqual(widgets[4].cget("text"), "Dies ist Vokabel 1/5 der Session", "Andreas has not the correct 5 entries, probably an error in adding of TSV file")
+        MyGUI.root.destroy()
+        with open("./CreateTestData.py") as DataCreation:
+            exec(DataCreation.read())
 
     def Check_EndSession_Labels(self, GUI, labels):
         widgets = GUI.frame[0].winfo_children()
@@ -519,11 +575,6 @@ class MyTestCase(unittest.TestCase):
         widgets = GUI.frameButtons.winfo_children()
         widgets[0].invoke()
         self.assertEqual(GUI.vocables[current_idx].content["answers"][user]["NextTime"], correct_NextTime) # make sure the "NextTime" Entry did not change after answering (must change only in "Fälligkeit" mode)
-
-
-
-
-
 
 if __name__ == '__main__':
     unittest.main()

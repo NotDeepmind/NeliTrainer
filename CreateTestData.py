@@ -2,6 +2,7 @@ import os
 import json
 from datetime import datetime as dt
 import datetime as dtt
+import csv
 
 TestData = []
 NextTime = dt.today() + dtt.timedelta(1)
@@ -72,3 +73,11 @@ TestData.append({
     })
 with open(os.path.dirname(os.path.abspath(__file__)) + r"\Testdata.json", 'w') as fp:
     json.dump(TestData, fp, indent=4, ensure_ascii=False)
+
+
+### Create Testdata as TSV to get imported
+time1 = dt.today() + dtt.timedelta(-1)
+time2 = dt.today() + dtt.timedelta(1)
+with open(os.path.dirname(os.path.abspath(__file__)) + r"\Testdata_import.tsv", mode='w', encoding='UTF8', newline='') as exportfile:
+    writer = csv.writer(exportfile, delimiter='\t')
+    writer.writerow(["german import, german import2", "spanish import, spanish import2", "imported comment", time1.strftime("%Y-%m-%d"), time2.strftime("%Y-%m-%d")])

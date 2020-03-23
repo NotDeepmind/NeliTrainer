@@ -1,15 +1,34 @@
 import tkinter as tk
 from tkinter import filedialog
 import json
-import C_vocables, C_selection
+import C_vocables
 from datetime import datetime as dt
-import datetime as dtt
 import os as os
-from ChangeManagement import ChangeManagement
+import csv
+import math
 
 
 
-
+def AddVocables(vocables, path):
+    if path == "":
+        path = filedialog.askopenfilename()
+    if path[-3:] != "txt" and path[-3:] != "tsv":
+        print("Es können nur Txt Dateien hinzugefügt werden (Komma getrennt, Tabstopp getrennt)")
+    else:
+        NewVocs = ParseTxt_toDicts(path)
+        NewVocsClassed = []
+        for entry in NewVocs:
+            NewVocsClassed.append(C_vocables.C_vocables(entry))
+        for i, item in zip(range(len(NewVocsClassed)), NewVocsClassed):
+            exists = 0
+            for olditem in vocables:
+                if item.content["deutsch"] == olditem.content["deutsch"] and item.content["spanisch"] == olditem.content["spanisch"] and item.content["kommentar"] == olditem.content["kommentar"]:
+                    exists = 1
+                    print(item.content["deutsch"][0] + " exists already")
+            if exists == 0:
+                vocables.insert(math.floor(i*len(vocables) / len(NewVocs)), item)
+                #print(item.content["deutsch"][0] + " newly added to the database")
+    return vocables
 
 def CheckEntry(Answers, vocable, requested, user, selector, vocable0):
     RecentAnswer = []
@@ -82,9 +101,10 @@ def ParseTxt_toDicts(path):
     ListOfDicts = []
     file = open(path, "r+", encoding='utf-8')
     file_content = file.readlines()
+    file.close()
     for id in range(len(file_content)):
-        strings = file_content[id].split(r"\t")
-        if len(strings) == 3:
+        strings = file_content[id].split("\t")
+        if len(strings) == 5:
             # format german strings to get single german entries
             stringsDeutsch = strings[0].split(",")
             try:
@@ -104,10 +124,30 @@ def ParseTxt_toDicts(path):
             if stringsSpanisch[-1] == "":
                 del stringsSpanisch[-1]
             stringsKommentar = strings[2].strip()
-            ListOfDicts.append({"spanisch": stringsSpanisch, "deutsch": stringsDeutsch,
-                                "answers": {}, "kommentar": stringsKommentar})
+            stringsNTAndreas = strings[3].strip()
+            stringsNTChrista = strings[4].strip()
+            ListOfDicts.append({"spanisch": stringsSpanisch,
+                                "deutsch": stringsDeutsch,
+                                "kommentar": stringsKommentar,
+                                "answers": {
+                                    "Andreas": {
+                                        "datetime": [""],
+                                        "answer": [""],
+                                        "delay": [0],
+                                        "correctness": ["Richtig"],
+                                        "NextTime": stringsNTAndreas
+                                    },
+                                    "Christa": {
+                                        "datetime": [""],
+                                        "answer": [""],
+                                        "delay": [0],
+                                        "correctness": ["Richtig"],
+                                        "NextTime": stringsNTChrista
+                                    }
+                                }
+                                })
         else:
-            print("There is an Issue with your .TSV: Number of columns != 3")
+            print("There is an Issue with your .TSV: Number of columns != 5")
     return (ListOfDicts)
 
 def Repeat_Wrong_Answers(answers, answers_idxs, selector):
@@ -138,6 +178,22 @@ def saving(path, vocables, nice_JSON):
                 json.dump(vocable_list, fp, indent=4)
             else:
                 json.dump(vocable_list, fp)
+
+def saveTSV(vocables, path):
+    TSV_lines = []
+    for vocable in vocables:
+        deutsch = ""
+        spanisch = ""
+        kommentar = vocable.content["kommentar"]
+        for word in vocable.content["deutsch"]:
+            deutsch += word + ", "
+        for word in vocable.content["spanisch"]:
+            spanisch += word + ", "
+        TSV_lines.append([deutsch, spanisch, kommentar])
+    with open(path + "_export.tsv", mode='w', encoding='UTF8', newline='') as exportfile:
+        writer = csv.writer(exportfile, delimiter='\t')
+        for line in TSV_lines:
+            writer.writerow(line)
 
 def tippfehler(vocable, user, answers):
     vocable.content["answers"][user]["correctness"][-1] = "Richtig"

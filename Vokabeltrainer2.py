@@ -7,6 +7,7 @@ import os as os
 from ChangeManagement import ChangeManagement as CM
 import functions
 import C_selection
+import csv
 
 #todo test GUI functions by NOT calling root.mainloop(), but invoking buttons directly without display
 # https://stackoverflow.com/questions/27430176/how-can-python-code-with-tkinter-mainloop-be-tested
@@ -57,6 +58,7 @@ class MyGUI:
         self.languagemode = 1
         self.ButtonLayout = "MainScreen"
         self.path = ""
+        self.path_AddVocables = ""
         self.user = ""
         self.user_answers = []
         self.user_answers_idx = []
@@ -115,10 +117,16 @@ class MyGUI:
             self.btn_SelectLecture = tk.Button(self.frameButtons, text="Lektion auswählen", font=self.fontLayout,
                                                command=self.Buttonfunc_LoadData)
             self.btn_SelectLecture.pack()
+            if self.path != "":
+                self.btn_SelectLecture.invoke()
             if read_old_data == 1:
                 tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
         ####################################################################################################################################
         elif self.ButtonLayout == "MainScreen2":
+            LecName = self.path.split("/")
+            LecName = LecName[-1].split(".")
+            tk.Label(self.frame[1], text = "", font = self.fontLayout).pack()
+            tk.Label(self.frame[1], text = LecName[0], font = self.fontLayout, fg = "#0000FF").pack()
             self.btn_SelectLecture.pack_forget()
             self.btn_continue = tk.Button(self.frameButtons, text="Weiter", width=2 * self.width, height=self.height, font=self.fontLayout,
                        command=self.Buttonfunc_Continue)
@@ -129,6 +137,9 @@ class MyGUI:
             tk.Button(self.frameButtons, text="Weitere Vokabeln aus .TSV hinzufügen", width=2 * self.width,
                       height=self.height, font=self.fontLayout,
                       command=self.Buttonfunc_AddVocables).pack()
+            tk.Label(self.frameButtons, text="Deutsch | Spanisch | Kommentar | Fällig Andreas YYYY-MM-DD | Fällig Christa YYYY-MM-DD").pack()
+            tk.Button(self.frameButtons, text="Datenbank als .TSV speichern", width=2*self.width, height=self.height, font=self.fontLayout,
+                      command=self.Buttonfunc_saveTSV).pack()
         ####################################################################################################################################
         elif self.ButtonLayout == "AskVocable":
             self.CheckVocable = tk.Button(self.frameButtons, text="Eingabe prüfen", font=self.fontLayout, width=self.width,
@@ -189,10 +200,10 @@ class MyGUI:
             self.Buttonfunc_NextVocable()
 
     def Buttonfunc_AddVocables(self):
-        pass
+        self.vocables = functions.AddVocables(self.vocables, self.path_AddVocables)
+        #self.Buttonfunc_saving() #for now, the enlarged database is only saved if and when it is used immediately for one of the users. There is no point in adding vocables and not using them right away..
 
     def Buttonfunc_ChangeManagement(self):
-        #todo implement the search and change correctly and write test cases
         self.SearchResults = CM()
         for widget in self.frameButtons.winfo_children():
             widget.destroy()
@@ -253,10 +264,6 @@ class MyGUI:
             ResultFields[0].insert(0, self.SearchResults.OrigEntires[self.SearchResults.idx]["deutsch"])
             ResultFields[1].insert(0, self.SearchResults.OrigEntires[self.SearchResults.idx]["spanisch"])
             ResultFields[2].insert(0, self.SearchResults.OrigEntires[self.SearchResults.idx]["kommentar"])
-
-
-
-
 
     def Buttonfunc_CheckEntry(self):
         self.vocables[self.Selector.idx], label_colors, correctness, self.vocables[0] = functions.CheckEntry(self.ET_Answer, self.vocables[self.Selector.idx], self.requested, self.user, self.Selector, self.vocables[0])
@@ -353,7 +360,7 @@ class MyGUI:
     def Buttonfunc_LoadData(self):
         if self.testmode:
             self.path, self.vocables, self.Selector = functions.LoadData(os.path.dirname(os.path.abspath(__file__)) + "\Testdata.json", self.Selector)
-        else:
+        elif self.path == "":
             self.path, self.vocables, self.Selector = functions.LoadData(filedialog.askopenfilename(), self.Selector)
         self.Create_Buttons("MainScreen2")
 
@@ -374,6 +381,15 @@ class MyGUI:
         self.restart = 1
         self.root.destroy()
 
+    def Buttonfunc_saveTSV(self):
+        if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
+            print("Eine TSV wurde geladen, es macht keinen Sinn diese als TSV neu zu speichern!")
+        elif os.path.isfile(self.path[:-5] + "_export.tsv"):
+            print("Eine TSV mit diesem Namen ist bereits vorhanden! Bitte alte Datei löschen!")
+        else:
+            functions.saveTSV(self.vocables, self.path[:-5])
+            #print("Created File " + self.path[:-5] + "_export.tsv")
+
     def Buttonfunc_Tippfehler(self):
         self.vocables[self.Selector.idx], self.user_answers = functions.tippfehler(self.vocables[self.Selector.idx], self.user, self.user_answers)
         self.Btn_Tippfehler.destroy()
@@ -385,8 +401,10 @@ if __name__ == "__main__":
     GUI.restart = 1
     GUI.root.destroy()
     while GUI.restart == 1:
+        path = GUI.path
         del GUI
         GUI = MyGUI()
+        GUI.path = path
         GUI.Create_Buttons("MainScreen")
         GUI.root.mainloop()
 
