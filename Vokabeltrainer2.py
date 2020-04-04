@@ -9,8 +9,50 @@ import functions
 import C_selection
 import csv
 
-#todo test GUI functions by NOT calling root.mainloop(), but invoking buttons directly without display
-# https://stackoverflow.com/questions/27430176/how-can-python-code-with-tkinter-mainloop-be-tested
+"""
+This is a vocable trainer program.
+For now, it is designed to be used by 3 different users (Andreas, Christa, gemeinsam).
+It uses language data in german and spanish, the presented language can be chosen freely, e.g. german is presented and spanish has to be entered by the user.
+There are two modes of vocable training:
+    "nach Reihenfolge" is a simple mode to ask a list of vocables, starting at the first and working through the whole list. The number of vocables to be checked for a session is to be entered by the user. When 
+        finishing a session and restarting at a later date, the asked vocables continues after the last answered entry in the last session.
+    "nach Fälligkeit" uses a system of intervals for each vocable in the list. Every vocable for every user has a date, when the vocable is to be checked again. After answering, the user can chose an interval of days 
+        to wait until the vocable is asked again. This System makes sure that the user can learn vocables that are harder to memorize more often. The number of vocables per session results from the due vocables and 
+        can large, but forces the user to learn every vocable at least once in 180 days (the maximum interval between checks), regardless of the "nach Reihenfolge" work.
+        
+Additional functions are:
+    A section where entries in the database can be looked up and modified as desired.
+    A section to add new entries in a list of TSV, which can be created using common online sources for vocable lists.
+    All Entries can be decorated by a "kommentar", which is presented to the user during questioning regardless of the presented language. This is mainly used to give context where necessary, e.g. "schnell" (fast) can 
+        be understoof in a temporal context or in terms of velocity.
+    After checking the answer to an asked vocable, the correctly entered results are highlighted in green while wrong or missing entries are highlighted in red. Where multiple answers are necessary, 
+        separated entry fields are given equal to the number of entries required. All answeres given are stored in the database for further evaluation at a later point and/or in a separate program. In case of 
+        accidental misspelling of answers, a button "Tippfehler" can be used to disregard all wrong answers. Also, if desired by the user an entry of a simple "#"-character is a wildcard entry and counts for all 
+        entries to be correct (effectively skipping easy vocables)
+    After completing a session, either by answering all the vocables of prematurely be the corresponding button, a screen will appear showing the number of answered vocables as well as correct and wrong answers. From 
+        here, the wrong answers can be repeated to improve the learning effect. This loop can be repeated as often as desired, or until all vocables have been answered correctly at least once.
+    After finishing a session the results have to be saved by pressing the correspoing buttons "Speichern & Beenden" or "Speichern & Neustarten". While the former will quit the program, the latter one will repeat from 
+        the selection screen but memorize the chosen vocable database. 
+    When answering "nach Fälligkeit", after every vocable the user can choose 1 out of 3 intervals for when to be asked the same vocable again. The possible intervals presented to the user depend on the previous 
+        interval and are defined in the list "IntervalMatrix" at the beginning of this code.
+
+
+Datastructure:
+ 
+This is the main File for the vocable trainer program.
+Here the Namespace is defined and all GUI related code.
+All functions and classes/methods are separated from these GUI definitions to facilitate a change of GUI Framework at any later point in development.
+The classes used are defined in C_vocables, every vocable entry is an object of this class. The vocable database is a list of these objects.
+C-Selection contains the information about which vocables are to show. Hence, the index numbers (corresponding to the list of vocables) are stored here. After every go-through of the vocables, the wrong answers can be
+    repeated and are stored in another list of indices. Any advanced logic in presented vocables (e.g. randomly chosen entries) should be made here.
+The ChangeManagement class contains all methods to handle the searching of vocable entries and changing these.
+functions.py is used where classes do not seem ideal, e.g. building the list of vocable objects when loading a file.
+"""
+
+#todo restrcutre data and use SQL database
+#todo implement a proper user management
+
+#todo double check whether or not to move to django and operate a prograssive web app using proper service workers
 
 ### Um Alte Daten einzulesen, folgende Variable auf 1 setzen:
 read_old_data = 0
@@ -22,6 +64,12 @@ nice_JSON = 0
 #compile via console in folder containing MainFile.py --> pyinstaller -F Vokabeltrainer2.py
 
 IntervalMatrix = []
+# defines the optional interval when answering vocables in "nach Fälligkeit" mode.
+    # first column and second column define the last interval
+    # third to fifth column are the new interval presented to the user as buttons
+    # e.g. a vocable's last interval was 15 days, then the user can choose to repeat the same vocable after 22, 1 or 11 days.
+    # the use is to either increase the interval steadily when happy with the learning success, decrease the interval slightly to improve leaning performance, or start again at interval of 1 day if much stronger focus
+    # on the particular vocable is desired.
 IntervalMatrix.append([	0	,	0	,	1	,	1	,	1	])
 IntervalMatrix.append([	1	,	1	,	2	,	1	,	1	])
 IntervalMatrix.append([	2	,	2	,	3	,	1	,	2	])
@@ -41,7 +89,7 @@ IntervalMatrix.append([	151	,	180	,	180	,	1	,	90	])
 
 class MyGUI:
     def __init__(self):
-        self.restart = 0
+        self.restart = 0 # used in "Speichern & Beenden" button, 0 > close program, 1 > restart program
         self.root = tk.Tk(className=" Nehls'scher Vokabeltrainer")
         self.canvas = tk.Canvas(self.root, height=700, width=900)
         self.canvas.pack()
@@ -52,32 +100,38 @@ class MyGUI:
         self.frame[1].place(relwidth=0.5, height=500, relx=0.5)
         self.frameButtons = tk.Frame(self.root)
         self.frameButtons.place(relwidth=1, height=200, rely=500 / (500 + 200))
-        self.ET_Answer = []
-        self.label_presented=[]
-        self.fontLayout = ("Helvetica", "18")
-        self.languagemode = 1
-        self.ButtonLayout = "MainScreen"
-        self.path = ""
-        self.path_AddVocables = ""
-        self.user = ""
-        self.user_answers = []
-        self.user_answers_idx = []
-        self.user_answers_NumVocables = -1
-        self.user_answers_total = 0
-        self.width = 20
-        self.height = 1
-        self.mode = []
-        self.RadioBtns = {}
-        self.RadioBtns["errors"]=[]
-        self.MaxNumVocables = 0
-        self.ButtonLayout = "MainScreen"
-        self.RadioBtnsContents=[]
-        self.vocables = []
-        self.testmode = False
-        self.Selector = C_selection.C_selection()
-        self.presented = []
-        self.requested = []
-        self.kommentar = ""
+        # The GUi is separated roughly in 3 regions when training vocable data
+        # +--------------+--------------+
+        # | frame[0]     | frame[1]     |
+        # | presented    | user answers |
+        # +--------------+--------------+
+        # |    frameButtons             |
+        # | pressable buttons here      |
+        # +-----------------------------+
+        self.ET_Answer = [] # list of entry fields for user answers to vocables
+        self.label_presented=[] # presented vocables as labels
+        self.fontLayout = ("Helvetica", "10") # as of now controls the font of all text in the GUI
+        self.languagemode = [] # sets the language presented, 0 = german, 1 = spanish, will be chosen at the start up menu
+        self.ButtonLayout = "MainScreen" # the buttom frame containing buttons has multiple templates, the currently used template can be stored here
+        self.path = "" # defines the path to the vocable database
+        self.path_AddVocables = "" # defines the path to a TSV or TXT if adding vocables to the main database
+        self.user = "" # contains the current user
+        self.user_answers = [] # lists all answers given during the session
+        self.user_answers_idx = [] # lists the index in the vocable list of any answer of the session
+        self.user_answers_NumVocables = -1 # number of vocables trained during session
+        self.user_answers_total = 0 # number of vocables trained in all session (continues even when repeating wrong answers, greater or equal to self.user_answers_NumVocables
+        self.width = 20 # common button width
+        self.height = 1 # common button height
+        self.mode = [] # either "nach Fälligkeit" or "nach Reihenfolge", set during start up menu
+        self.RadioBtns = {} # stores all the radio buttons in start up menu
+        self.RadioBtns["errors"]=[] # used in start up menu if radio buttons are chosen wrong and/or are missing
+        self.MaxNumVocables = 0 # set in start up menu for "nach Reihenfolge", defines how many vocables to ask in this session
+        self.vocables = [] # stores the list of all vocables in current database
+        self.testmode = False # used only during testing
+        self.Selector = C_selection.C_selection() # initialize selection object, only on is used to determine which vocable to ask during training
+        self.presented = [] # labels of presented words of current vocable during training
+        self.requested = [] # labels of correct answers for all words curing training
+        self.kommentar = "" # comment field content during training
 
     def Create_Buttons(self,ButtonLayout = None):
         if ButtonLayout != None:
