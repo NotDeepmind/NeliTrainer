@@ -429,6 +429,11 @@ class MyTestCase(unittest.TestCase):
         widgets_left[7].invoke()
         self.assertEqual(MyGUI.vocables[-1].content["deutsch"][0], "new_german", "Changed Entry is not set correctly in MyGUI.vocables")
         self.assertEqual(MyGUI.FoundEntries[1].get(), "new_spanish, new_spanish2", "Changed Entry is not found or not shown correctly")
+        widgets_left[2].delete(0,"end")
+        widgets_left[7].invoke()
+        widgets_right[10].invoke()
+        widgets_right = MyGUI.frame[1].winfo_children()
+        widgets_right[11].invoke()
         MyGUI.root.destroy()
         #reload the data to check if changes are saved correctly in the file
         MyGUI = VT.MyGUI()
@@ -436,6 +441,9 @@ class MyTestCase(unittest.TestCase):
         widgets = MyGUI.frameButtons.winfo_children()
         widgets[1].invoke()
         widgets_left = MyGUI.frame[0].winfo_children()
+        widgets_left[7].invoke()
+        self.assertNotEqual(MyGUI.FoundEntries[0].get(), "dTest1-1R", "Entry was not deleted properly")
+        self.assertEqual(MyGUI.FoundEntries[0].get(), "dTest1-3R")
         widgets_left[2].insert(0,"new_german") # search for Test in german field, should give 8 results
         widgets_left[7].invoke()
         self.assertEqual(MyGUI.vocables[-1].content["deutsch"][0], "new_german", "Changed Entry is not set correctly in MyGUI.vocables after reloading the database")

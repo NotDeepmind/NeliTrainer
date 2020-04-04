@@ -61,7 +61,7 @@ read_old_data = 0
 ### (ohne schöne Formatierung lässt sich erheblich Speicherplatz sparen)
 nice_JSON = 0
 
-#compile via console in folder containing MainFile.py --> pyinstaller -F Vokabeltrainer2.py
+#compile via terminal in folder containing MainFile.py --> pyinstaller -F --icon=icon.ico  Vokabeltrainer2.py
 
 IntervalMatrix = []
 # defines the optional interval when answering vocables in "nach Fälligkeit" mode.
@@ -110,7 +110,7 @@ class MyGUI:
         # +-----------------------------+
         self.ET_Answer = [] # list of entry fields for user answers to vocables
         self.label_presented=[] # presented vocables as labels
-        self.fontLayout = ("Helvetica", "10") # as of now controls the font of all text in the GUI
+        self.fontLayout = ("Helvetica", "18") # as of now controls the font of all text in the GUI
         self.languagemode = [] # sets the language presented, 0 = german, 1 = spanish, will be chosen at the start up menu
         self.ButtonLayout = "MainScreen" # the buttom frame containing buttons has multiple templates, the currently used template can be stored here
         self.path = "" # defines the path to the vocable database
@@ -132,6 +132,8 @@ class MyGUI:
         self.presented = [] # labels of presented words of current vocable during training
         self.requested = [] # labels of correct answers for all words curing training
         self.kommentar = "" # comment field content during training
+        self.btn_delete = [] # button widget in changemanagement to delete entries from database
+        self.btn_search = [] # button widget in changemanagement to search for entries in database
 
     def Create_Buttons(self,ButtonLayout = None):
         if ButtonLayout != None:
@@ -288,8 +290,15 @@ class MyGUI:
                   command= lambda: self.Buttonfunc_CM_previous(self.FoundEntries)).grid(row=8,column=1, sticky="E")
         tk.Button(self.frame[1], text="Speichern", font=self.fontLayout,
                   command=lambda: self.Buttonfunc_CM_save(self.FoundEntries)).grid(row=9,column=1,columnspan=2)
-        tk.Button(self.frame[0], text="Suchen", font=self.fontLayout,
-                  command=lambda: self.Buttonfunc_CM_search(SearchEntries[0].get(),SearchEntries[1].get(),SearchEntries[2].get(), self.vocables, self.FoundEntries)).grid(row=5,column=1,columnspan=2)
+        self.btn_delete.append(tk.Button(self.frame[1], text="Vokabel löschen", font=self.fontLayout,
+                  command=self.Buttonfunc_CM_delete1))
+        self.btn_delete.append(tk.Button(self.frame[1], text="Wirklich löschen", font=self.fontLayout,
+                  command= lambda: self.Buttonfunc_CM_delete2(self.FoundEntries)))
+        self.btn_delete.append(tk.Label(self.frame[1], text=" ", font=self.fontLayout))
+        self.btn_delete[0].grid(row=10,column=1,columnspan=2)
+        self.btn_search = tk.Button(self.frame[0], text="Suchen", font=self.fontLayout,
+                  command=lambda: self.Buttonfunc_CM_search(SearchEntries[0].get(),SearchEntries[1].get(),SearchEntries[2].get(), self.vocables, self.FoundEntries))
+        self.btn_search.grid(row=5,column=1,columnspan=2)
         self.ButtonLayout = "MainScreen"
         tk.Button(self.frameButtons, text="Zurück zum Hauptmenü", font=self.fontLayout, command=self.Create_Buttons).pack()
     def Buttonfunc_CM_next(self, ResultFields):
@@ -305,11 +314,23 @@ class MyGUI:
         for field in ResultFields:
             field.delete(0, "end")
         functions.saving(self.path, self.vocables,1)
+    def Buttonfunc_CM_delete1(self):
+        self.btn_delete[0].grid_forget()
+        self.btn_delete[2].grid(row=10,column=1,columnspan=2)
+        self.btn_delete[1].grid(row=11,column=1,columnspan=2)
+    def Buttonfunc_CM_delete2(self, ResultFields):
+        self.btn_delete[1].grid_forget()
+        self.btn_delete[0].grid(row=10,column=1,columnspan=2)
+        self.vocables.pop(self.SearchResults.OrigEntires[self.SearchResults.idx]["ID"])
+        functions.saving(self.path, self.vocables,1)
+        self.btn_search.invoke()
 
     def Buttonfunc_CM_search(self, deutsch, spanisch, kommentar, vocables, ResultFields):
         self.SearchResults.Search(deutsch, spanisch, kommentar, vocables)
         if len(self.SearchResults.IDs) == 0:
             tk.Label(self.frame[1], text="Eintrag nicht gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
+            for field in ResultFields:
+                field.delete(0, "end")
         self.CM_refreshResults(ResultFields)
     def CM_refreshResults(self, ResultFields):
         if len(self.SearchResults.IDs) > 0:

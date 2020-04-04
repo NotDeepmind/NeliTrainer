@@ -38,7 +38,7 @@ class ChangeManagement:
                 for word in vocable.content["spanisch"]:
                     Entry_spanisch += word + ", "
                 Entry_kommentar = vocable.content["kommentar"]
-                self.OrigEntires.append({"deutsch": Entry_deutsch[:-2], "spanisch": Entry_spanisch[:-2], "kommentar": Entry_kommentar})
+                self.OrigEntires.append({"deutsch": Entry_deutsch[:-2], "spanisch": Entry_spanisch[:-2], "kommentar": Entry_kommentar, "ID": ID})
             ID += 1
         self.IDs = found
 
