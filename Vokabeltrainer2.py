@@ -49,7 +49,7 @@ The ChangeManagement class contains all methods to handle the searching of vocab
 functions.py is used where classes do not seem ideal, e.g. building the list of vocable objects when loading a file.
 """
 
-#todo restrcutre data and use SQL database
+#todo restrcutre data and use SQL database ye
 #todo implement a proper user management
 
 #todo double check whether or not to move to django and operate a prograssive web app using proper service workers
