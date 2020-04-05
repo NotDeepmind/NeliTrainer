@@ -437,6 +437,8 @@ class MyGUI:
             self.path, self.vocables, self.Selector = functions.LoadData(os.path.dirname(os.path.abspath(__file__)) + "\Testdata.json", self.Selector)
         elif self.path == "":
             self.path, self.vocables, self.Selector = functions.LoadData(filedialog.askopenfilename(), self.Selector)
+        else:
+            self.path, self.vocables, self.Selector = functions.LoadData(self.path, self.Selector)
         self.Create_Buttons("MainScreen2")
 
     def Buttonfunc_ReadOldData(self):
