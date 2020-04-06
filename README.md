@@ -1,4 +1,7 @@
 # NeliTrainer
+
+# Zum Starten des Programms Vokabeltrainer2.py ausführen!
+
 Dies ist ein privater Vokabeltrainer.
 Es wird ein Vokabular gepflegt, in dem Einträge vorgenommen sind für deutsche Übersetzung, spanische Übersetzung und Kommentare.
 Dabei können beliebig viele deutsche Begriffe mit beliebig vielen spanischen verknüpft werden. Kommentare dienen dazu, ggfls. die Wörter zu verdeutlichen, beispielsweise kann "kurz" im metrischen oder im temporalen Kontext gemeint sein. Beim üben der Vokabeln kann die vorgegebene Sprache gewählt werden, in der jeweils anderen muss dann geantwortet werden. Dabei werden stets alle Begriffe einzeln abgefragt, nach dem Prüfen der Eingabe werden richtige Begriffe in grün und falsch eingegebene Begriffe in rot dargestellt.
