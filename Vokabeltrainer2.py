@@ -313,7 +313,7 @@ class MyGUI:
             self.vocables[self.SearchResults.IDs[self.SearchResults.idx]].content[key] = self.SearchResults.NewEntry[key]
         for field in ResultFields:
             field.delete(0, "end")
-        functions.saving(self.path, self.vocables,1)
+        functions.saving(self.path, self.vocables,nice_JSON)
     def Buttonfunc_CM_delete1(self):
         self.btn_delete[0].grid_forget()
         self.btn_delete[2].grid(row=10,column=1,columnspan=2)
@@ -322,7 +322,7 @@ class MyGUI:
         self.btn_delete[1].grid_forget()
         self.btn_delete[0].grid(row=10,column=1,columnspan=2)
         self.vocables.pop(self.SearchResults.OrigEntires[self.SearchResults.idx]["ID"])
-        functions.saving(self.path, self.vocables,1)
+        functions.saving(self.path, self.vocables,nice_JSON)
         self.btn_search.invoke()
 
     def Buttonfunc_CM_search(self, deutsch, spanisch, kommentar, vocables, ResultFields):
@@ -450,11 +450,11 @@ class MyGUI:
         self.Create_Buttons("AskVocable")
 
     def Buttonfunc_Save_Exit(self):
-        functions.saving(self.path, self.vocables,1)
+        functions.saving(self.path, self.vocables,nice_JSON)
         self.root.destroy()
 
     def Buttonfunc_Save_Restart(self):
-        functions.saving(self.path, self.vocables,1)
+        functions.saving(self.path, self.vocables,nice_JSON)
         self.restart = 1
         self.root.destroy()
 

@@ -82,7 +82,7 @@ def NextVocable(Selector, mode, last_stop, language, vocables):
 
 def LoadData(path, Selector):
     ListOfObjects = []
-    print("loading data in functions")
+    #print("loading data in functions")
     if path != "":
         if path[-3:] == "txt" or path[-3:] == "tsv":
             if os.path.isfile(path[:-3] + "json"):

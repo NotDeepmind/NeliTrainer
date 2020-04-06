@@ -5,6 +5,7 @@ class Database:
     def __init__(self, path):
         if path == "":
             path = "database2.db"
+        self.path = path
         self.conn = sqlite3.connect(path)
         self.c = self.conn.cursor()
         self.c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='vocables'")
@@ -23,25 +24,58 @@ class Database:
             self.c.execute("""CREATE TABLE lessons (
                            user text,
                            name text,
-                           ids text,
                            last_stop integer
                            )""")
             self.conn.commit()
+
+    def convert_JSON(self):
+        #todo clear up code n stuff
+        import functions
+        import C_selection
+        selector = C_selection.C_selection()
+        path, vocables, selector = functions.LoadData(self.path[:-2] + "json", selector)
+        for user in vocables[0].content["answers"]:
+            self.add_lesson(user, "Alles", range(len(vocables)), vocables[0].content[user]["last_stop"])
+        for vocable in vocables:
+            self.add_vocable(", ".join(vocable.content["deutsch"]), ", ".join(vocable.content["spanisch"]), vocable.content["kommentar"])
+            vocID = self.find_vocable(", ".join(vocable.content["deutsch"]), ", ".join(vocable.content["spanisch"]), vocable.content["kommentar"])
+            for user in vocable.content["answers"]:
+                try:
+                    print("updating table of " + user + " at vocID " + str(vocID) + " to show a delay of " + str(vocable.content["answers"][user]["delay"][-1]))
+                    self.add_lesson_delay(user, "Alles", vocID[0][0], vocable.content["answers"][user]["delay"][-1], vocable.content["answers"][user]["NextTime"])
+                except:
+                    if user != "gemeinsam":
+                        print("Error during setting of NextTime")
+                #print("userloop working on " + user)
+                for idx in range(len(vocable.content["answers"][user]["delay"])):
+                    try:
+                        self.add_answer(user,
+                                   vocID[0][0],
+                                   ", ".join(vocable.content["answers"][user]["answer"][idx]),
+                                   vocable.content["answers"][user]["datetime"][idx],
+                                   vocable.content["answers"][user]["correctness"][idx]
+                                   )
+                    except:
+                        print("corrupted data on Answer: " + ", ".join(vocable.content["deutsch"]) + ", " + user)
+                    #print(", ".join(vocable.content["deutsch"]) + ", " + user)
+                    #print(vocable.content["answers"][user]["correctness"][idx])
+
 
 
     def _check_user(self, user):
         self.c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='{}_answertable'".format(user))
         if len(self.c.fetchall()) == 0:
             self.c.execute("""CREATE TABLE {}_answertable (
+                            vocID integer,
                             answer text,
                             datetime integer,
                             correctness text
                             )""".format(user))
             self.conn.commit()
 
-    def add_answer(self, user, answer, datetime, correctness):
+    def add_answer(self, user, vocID, answer, datetime, correctness):
         self._check_user(user)
-        self.c.execute("INSERT INTO {}_answertable VALUES (:answer, :datetime, :correctness)".format(user), {'answer': answer, 'datetime': datetime, 'correctness': correctness})
+        self.c.execute("INSERT INTO {}_answertable VALUES (:vocID, :answer, :datetime, :correctness)".format(user), {'answer': answer, 'datetime': datetime, 'correctness': correctness, "vocID": vocID})
 
 
 
@@ -67,7 +101,7 @@ class Database:
         self.conn.commit()
 
 
-    def add_lesson(self, user, lesson, IDs):
+    def add_lesson(self, user, lesson, IDs, last_stop):
         self.c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='{}_lesson_{}'".format(user, lesson))
         if len(self.c.fetchall()) == 0:
             self.c.execute("""CREATE TABLE {}_lesson_{} (
@@ -76,6 +110,7 @@ class Database:
                            next_time text
                            )""".format(user, lesson))
             self.conn.commit()
+            self.c.execute("INSERT INTO lessons VALUES (:user, :lesson, :last_stop)", {"last_stop": last_stop, "user": user, "lesson": lesson})
         else:
             print("The lesson you tried to create exists already!")
             return False
@@ -94,52 +129,56 @@ class Database:
 
 
 if __name__ == "__main__":
-    import functions
-    from tkinter import filedialog
-    import C_selection
-
-    db = Database("")
-    db.add_vocable("dtest", "stest", "kommtest")
-    db.add_vocable("dtest2", "stest", "kommtest")
-    db.add_vocable("dtest2", "stest2", "kommtest")
-    db.add_vocable("dtest2", "stest2", "kommtest2")
-    entry = db.find_vocable("dtest2", "", "")
-    print(entry[0])
-    db.add_answer("Andreas", "testanswer", "01-05-2020", "Richtig")
-    #db.delete_vocable(entry[0][0])
-    db.add_vocable("new last", "stest2", "kommtest2")
-    entry = db.find_vocable("new", "", "")
-    db.delete_vocable(entry[0][0])
-    db.add_vocable("new last", "stest2", "kommtest2")
-    db.add_lesson("Andreas", "Testlektion", range(10))
-
-
-    selector = C_selection.C_selection()
-    #path = filedialog.askopenfilename()
-    #print(path)
-    path = "C:/Users/Stefan/Desktop/Vokabeltrainer/Vokabeln bis 21 v1a.json"
-    path, vocables, selector = functions.LoadData(path, selector)
-    db2 = Database(path[:-4] + "db")
-    for vocable in vocables:
-        db2.add_vocable(", ".join(vocable.content["deutsch"]), ", ".join(vocable.content["spanisch"]), vocable.content["kommentar"])
-        vocID = db2.find_vocable(", ".join(vocable.content["deutsch"]), ", ".join(vocable.content["spanisch"]), vocable.content["kommentar"])
-        for user in vocable.content["answers"]:
-            db2.add_lesson(user, "Alles", range(len(vocables)))
-            try:
-                print("updating table of " + user + " at vocID " + str(vocID) + " to show a delay of " + str(vocable.content["answers"][user]["delay"][-1]))
-                db2.add_lesson_delay(user, "Alles", vocID[0][0], vocable.content["answers"][user]["delay"][-1], vocable.content["answers"][user]["NextTime"])
-            except:
-                if user != "gemeinsam":
-                    print("Error during setting of NExtTime")
-            #print("userloop working on " + user)
-            for idx in range(len(vocable.content["answers"][user]["delay"])):
-                try:
-                    db2.add_answer(user,
-                               ", ".join(vocable.content["answers"][user]["answer"][idx]),
-                               vocable.content["answers"][user]["datetime"][idx],
-                               vocable.content["answers"][user]["correctness"][idx]
-                               )
-                except:
-                    print("corrupted data on Answer: " + ", ".join(vocable.content["deutsch"]) + ", " + user)
+    # import functions
+    # from tkinter import filedialog
+    # import C_selection
+    #
+    # db = Database("")
+    # db.add_vocable("dtest", "stest", "kommtest")
+    # db.add_vocable("dtest2", "stest", "kommtest")
+    # db.add_vocable("dtest2", "stest2", "kommtest")
+    # db.add_vocable("dtest2", "stest2", "kommtest2")
+    # entry = db.find_vocable("dtest2", "", "")
+    # print(entry[0])
+    # db.add_answer("Andreas", "testanswer", "01-05-2020", "Richtig")
+    # #db.delete_vocable(entry[0][0])
+    # db.add_vocable("new last", "stest2", "kommtest2")
+    # entry = db.find_vocable("new", "", "")
+    # db.delete_vocable(entry[0][0])
+    # db.add_vocable("new last", "stest2", "kommtest2")
+    # db.add_lesson("Andreas", "Testlektion", range(10))
+    #
+    #
+    # selector = C_selection.C_selection()
+    # #path = filedialog.askopenfilename()
+    # #print(path)
+    # path = "C:/Users/Stefan/Desktop/Vokabeltrainer/Vokabeln bis 21 v1a.json"
+    # path, vocables, selector = functions.LoadData(path, selector)
+    # db2 = Database(path[:-4] + "db")
+    # for vocable in vocables:
+    #     db2.add_vocable(", ".join(vocable.content["deutsch"]), ", ".join(vocable.content["spanisch"]), vocable.content["kommentar"])
+    #     vocID = db2.find_vocable(", ".join(vocable.content["deutsch"]), ", ".join(vocable.content["spanisch"]), vocable.content["kommentar"])
+    #     for user in vocable.content["answers"]:
+    #         db2.add_lesson(user, "Alles", range(len(vocables)))
+    #         try:
+    #             print("updating table of " + user + " at vocID " + str(vocID) + " to show a delay of " + str(vocable.content["answers"][user]["delay"][-1]))
+    #             db2.add_lesson_delay(user, "Alles", vocID[0][0], vocable.content["answers"][user]["delay"][-1], vocable.content["answers"][user]["NextTime"])
+    #         except:
+    #             if user != "gemeinsam":
+    #                 print("Error during setting of NExtTime")
+    #         #print("userloop working on " + user)
+    #         for idx in range(len(vocable.content["answers"][user]["delay"])):
+    #             try:
+    #                 db2.add_answer(user,
+    #                            ", ".join(vocable.content["answers"][user]["answer"][idx]),
+    #                            vocable.content["answers"][user]["datetime"][idx],
+    #                            vocable.content["answers"][user]["correctness"][idx]
+    #                            )
+    #             except:
+    #                 print("corrupted data on Answer: " + ", ".join(vocable.content["deutsch"]) + ", " + user)
                 #print(", ".join(vocable.content["deutsch"]) + ", " + user)
                 #print(vocable.content["answers"][user]["correctness"][idx])
+
+    path = "Testdata.db"
+    db = Database(path)
+    db.convert_JSON()
