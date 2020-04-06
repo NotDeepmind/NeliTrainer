@@ -29,7 +29,6 @@ class Database:
             self.conn.commit()
 
     def convert_JSON(self):
-        #todo clear up code n stuff
         import functions
         import C_selection
         selector = C_selection.C_selection()
