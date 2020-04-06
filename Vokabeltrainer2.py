@@ -10,6 +10,7 @@ import C_selection
 import csv
 
 """
+check
 This is a vocable trainer program.
 For now, it is designed to be used by 3 different users (Andreas, Christa, gemeinsam).
 It uses language data in german and spanish, the presented language can be chosen freely, e.g. german is presented and spanish has to be entered by the user.
