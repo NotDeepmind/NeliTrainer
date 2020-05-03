@@ -1,3 +1,7 @@
+#todo adapt SQL db here too
+from database import Database
+from VT_logger import logger
+
 class ChangeManagement:
     def __init__(self):
         self.IDs = []
@@ -5,42 +9,20 @@ class ChangeManagement:
         self.OrigEntires = []
         self.NewEntry = {}
 
-    def Search (self, deutsch, spanisch, kommentar, vocables):
-        ID = 0
-        self.idx = 0
-        found = []
+    def Search (self, deutsch, spanisch, kommentar, path):
         self.OrigEntires = []
-        for vocable in vocables:
-            match = 0
-            if deutsch == "":
-                match += 1
-            if spanisch == "":
-                match += 1
-            if kommentar == "":
-                match += 1
-            for word in vocable.content["deutsch"]:
-                if deutsch in word and deutsch != "":
-                    match += 1
-                    break
-            for word in vocable.content["spanisch"]:
-                if spanisch in word and spanisch != "":
-                    match += 1
-                    break
-            if kommentar in vocable.content["kommentar"] and kommentar != "":
-                match += 1
-            if match == 3:
-                found.append(ID)
-                Entry_deutsch = ""
-                Entry_spanisch = ""
-                Entry_kommentar = ""
-                for word in vocable.content["deutsch"]:
-                    Entry_deutsch += word + ", "
-                for word in vocable.content["spanisch"]:
-                    Entry_spanisch += word + ", "
-                Entry_kommentar = vocable.content["kommentar"]
-                self.OrigEntires.append({"deutsch": Entry_deutsch[:-2], "spanisch": Entry_spanisch[:-2], "kommentar": Entry_kommentar, "ID": ID})
-            ID += 1
-        self.IDs = found
+        self.idx = 0
+        logger.info("Searching for " + deutsch + "; " + spanisch + "; " + kommentar)
+        db = Database(path)
+        results = db.find_vocable(deutsch, spanisch, kommentar)
+        for result in results:
+            self.OrigEntires.append({
+                'vocID': result[0],
+                'deutsch': result[1],
+                'spanisch': result[2],
+                'kommentar': result[3],
+            })
+        self.IDs = range(len(self.OrigEntires))
 
     def next(self):
         self.idx += 1
@@ -52,18 +34,9 @@ class ChangeManagement:
         if self.idx < 0:
             self.idx = len(self.IDs) - 1
 
-    def ChangedEntries(self, deutsch, spanisch, kommentar):
-        #separate function to take string from user entry and convert deutsch / spanisch to correct lists of entries
-        LanguageEntries = [deutsch, spanisch]
-        for i, Entry in zip(range(2), LanguageEntries):
-            content = Entry.split(",")
-            for j, word in zip(range(len(content)), content):
-                if len(word) > 0:
-                    while word[0] == " ": # remove starting / finishing spaces
-                        word = word[1:]
-                    while word[-1] == " ":
-                        word = word[:-1]
-                    content[j] = word
-            LanguageEntries[i] = content
-        self.NewEntry = {"deutsch": LanguageEntries[0], "spanisch" : LanguageEntries[1], "kommentar" : kommentar}
-
+    def ChangedEntries(self, deutsch, spanisch, kommentar, path):
+        db = Database(path)
+        logger.info("Saving changed on vocID: " + str(self.OrigEntires[self.idx]["vocID"]))
+        logger.debug("New contents are:")
+        logger.debug("german: " + deutsch + ", spanisch: " + spanisch + ", comment: " + kommentar)
+        db.set_vocable(self.OrigEntires[self.idx]["vocID"], deutsch, spanisch, kommentar)

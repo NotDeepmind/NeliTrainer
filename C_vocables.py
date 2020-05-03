@@ -1,32 +1,26 @@
 from datetime import datetime as dt
 import datetime as dtt
+from database import Database
+from VT_logger import logger, exceptionHandling
 
 class C_vocables:
     def __init__(self, VocabelEntry):
         self.content = VocabelEntry
 
-    def AddDelay(self, user, delay, mode):
+    def AddDelay(self, user, delay, mode, path):
+        db = Database(path)
         TimeToAskAgain = dt.today() + dtt.timedelta(days=delay)
         if mode == "nach Fälligkeit":
-            self.content["answers"][user]["NextTime"] = TimeToAskAgain.strftime("%Y-%m-%d")
-        self.content["answers"][user]["delay"].append(delay)
+            db.set_lesson_delay(user, 'Alles', self.content['vocID'], delay, TimeToAskAgain.strftime("%Y-%m-%d"))
+            self.content['NextTime'] = TimeToAskAgain.strftime("%Y-%m-%d")
+            logger.info('Setting the new NextTime to ' + TimeToAskAgain.strftime("%Y-%m-%d"))
 
     def report(self):
         print(self.content)
 
-    def EnterResults(self, Answers, IntCorrects, user):
-        if user in self.content["answers"]:
-            pass
-        else:
-            self.content["answers"][user] = {}
-            self.content["answers"][user]["datetime"] = []
-            self.content["answers"][user]["answer"] = []
-            self.content["answers"][user]["delay"] = []
-            self.content["answers"][user]["correctness"] = []
-        self.content["answers"][user]["datetime"].append(dt.now().strftime("%Y-%m-%d %H:%M:%S"))
-        self.content["answers"][user]["answer"].append(Answers)
-        if IntCorrects == len(Answers):
-            self.content["answers"][user]["correctness"].append("Richtig")
-        else:
-            self.content["answers"][user]["correctness"].append("Falsch")
-
+    def EnterResults(self, Answers, correctness, user, path):
+        db = Database(path)
+        logger.info('Saving Answer to Database..')
+        answer_datetime = dt.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.add_answer(user, self.content['vocID'], ', '.join(Answers), answer_datetime, correctness)
+        return answer_datetime

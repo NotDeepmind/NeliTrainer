@@ -8,7 +8,7 @@ from ChangeManagement import ChangeManagement
 from random import randrange
 import csv
 
-#todo check if loading of tsv always check for the correct number of entires (5) per line for deutsch, spanisch, kommentar, fälligAndreas, fälligChrista
+# todo check if loading of tsv always check for the correct number of entires (5) per line for deutsch, spanisch, kommentar, fälligAndreas, fälligChrista
 
 ### Um Alte Daten einzulesen, folgende Variable auf 1 setzen:
 read_old_data = 0
@@ -17,100 +17,31 @@ read_old_data = 0
 ### (ohne schöne Formatierung lässt sich erheblich Speicherplatz sparen)
 nice_JSON = 0
 
-#compile via console in folder containing MainFile.py --> pyinstaller -F MainFile.py
+# compile via console in folder containing MainFile.py --> pyinstaller -F MainFile.py
 
-#todo abschlussauswertung am ende --> anzahl der beantwortetetn vokabeln & Anzahl der Antworten zeigen
-#todo immer 6 Antwortfelder geben <-- erstmal lassen
+# todo abschlussauswertung am ende --> anzahl der beantworteten vokabeln & Anzahl der Antworten zeigen
+# todo immer 6 Antwortfelder geben <-- erstmal lassen
 
-#todo aufgetretene Probleme:
-#todo Beim erstmaligen durchgehen der fälligen Vokabeln eines neues JSON files wird vor der letzten Vokabel abgebrochen
+# todo aufgetretene Probleme:
+# todo Beim erstmaligen durchgehen der fälligen Vokabeln eines neues JSON files wird vor der letzten Vokabel abgebrochen
 
 IntervalMatrix = []
-IntervalMatrix.append([	0	,	0	,	1	,	1	,	7	])
-IntervalMatrix.append([	1	,	1	,	2	,	1	,	7	])
-IntervalMatrix.append([	2	,	2	,	3	,	1	,	7	])
-IntervalMatrix.append([	3	,	3	,	4	,	1	,	7	])
-IntervalMatrix.append([	4	,	4	,	5	,	1	,	7	])
-IntervalMatrix.append([	5	,	5	,	6	,	1	,	7	])
-IntervalMatrix.append([	6	,	6	,	7	,	1	,	7	])
-IntervalMatrix.append([	7	,	14	,	15	,	1	,	7	])
-IntervalMatrix.append([	15	,	21	,	22	,	1	,	7	])
-IntervalMatrix.append([	22	,	29	,	31	,	1	,	7	])
-IntervalMatrix.append([	30	,	60	,	61	,	1	,	7	])
-IntervalMatrix.append([	61	,	90	,	91	,	1	,	7	])
-IntervalMatrix.append([	91	,	120	,	121	,	1	,	7	])
-IntervalMatrix.append([	121	,	150	,	151	,	1	,	7	])
-IntervalMatrix.append([	151	,	180	,	180	,	1	,	7	])
+IntervalMatrix.append([0, 0, 1, 1, 7])
+IntervalMatrix.append([1, 1, 2, 1, 7])
+IntervalMatrix.append([2, 2, 3, 1, 7])
+IntervalMatrix.append([3, 3, 4, 1, 7])
+IntervalMatrix.append([4, 4, 5, 1, 7])
+IntervalMatrix.append([5, 5, 6, 1, 7])
+IntervalMatrix.append([6, 6, 7, 1, 7])
+IntervalMatrix.append([7, 14, 15, 1, 7])
+IntervalMatrix.append([15, 21, 22, 1, 7])
+IntervalMatrix.append([22, 29, 31, 1, 7])
+IntervalMatrix.append([30, 60, 61, 1, 7])
+IntervalMatrix.append([61, 90, 91, 1, 7])
+IntervalMatrix.append([91, 120, 121, 1, 7])
+IntervalMatrix.append([121, 150, 151, 1, 7])
+IntervalMatrix.append([151, 180, 180, 1, 7])
 
-
-
-
-class C_vocables:
-    def __init__(self, vocables):
-        self.vocables = vocables
-
-    def vocable(self, presented, requested):
-        self.presented = presented
-        self.requested = requested
-
-    def CheckEntry(self, idx):
-        RecentAnswer = []
-        for id in range(len(MyGUI.ET_Answer)):
-            RecentAnswer.append(MyGUI.ET_Answer[id].get())
-        CorrectInstance2 = 0
-        Cheatmode = 0
-        for id in range(
-                len(MyGUI.ET_Answer)):  # second loop here because all answers have to be saved to cross-check answer
-            CorrectInstance = 0
-            for id2 in range(len(MyGUI.ET_Answer)):
-                if RecentAnswer[id2] == self.requested[id] or RecentAnswer[id2] == "#":
-                    label = tk.Label(MyGUI.frame[1], text=self.requested[id], fg="#50AA50",
-                                     font=MyGUI.fontLayout).pack()
-                    CorrectInstance = 1
-                    CorrectInstance2 += 1
-            if CorrectInstance == 0:
-                label = tk.Label(MyGUI.frame[1], text=self.requested[id], fg="#FF0000",
-                                 font=MyGUI.fontLayout).pack()
-            if RecentAnswer[id2] == "#":
-                Cheatmode = 1
-        if Cheatmode == 1:
-            CorrectInstance2=len(MyGUI.ET_Answer)
-        if MyGUI.user != "":
-            self.EnterResults(RecentAnswer, CorrectInstance2, MyGUI.user, idx)
-
-    def EnterResults(self, RecentAnswer, CorrectInstance2, user, id):
-        if user in self.vocables[id]["answers"]:
-            pass
-        else:
-            self.vocables[id]["answers"][user] = {}
-            self.vocables[id]["answers"][user]["datetime"] = []
-            self.vocables[id]["answers"][user]["answer"] = []
-            self.vocables[id]["answers"][user]["delay"] = []
-            self.vocables[id]["answers"][user]["correctness"] = []
-        self.vocables[id]["answers"][user]["datetime"].append(dt.now().strftime("%Y-%m-%d %H:%M:%S"))
-        self.vocables[id]["answers"][user]["answer"].append(RecentAnswer)
-        if CorrectInstance2 == len(RecentAnswer):
-            self.vocables[id]["answers"][user]["correctness"].append("Richtig")
-            MyGUI.user_answers.append("Richtig")
-            MyGUI.user_answers_idx.append(Selector.idx)
-        else:
-            self.vocables[id]["answers"][user]["correctness"].append("Falsch")
-            MyGUI.user_answers.append("Falsch")
-            MyGUI.user_answers_idx.append(Selector.idx)
-            print("Wrong Answer given to vocabel >> " + self.vocables[id]["deutsch"][0] + " << ID: " + str(id))
-
-    def NextTime(self, id, user, AddedInterval):
-        if MyGUI.mode == "nach Fälligkeit":
-            TimeToAskAgain = dt.today() + dtt.timedelta(days=AddedInterval)
-            self.vocables[id]["answers"][user]["NextTime"] = TimeToAskAgain.strftime("%Y-%m-%d")
-            self.vocables[id]["answers"][user]["delay"].append(AddedInterval)
-        elif MyGUI.mode == "nach Reihenfolge":
-            self.vocables[id]["answers"][user]["delay"].append(-1)
-        if len(MyGUI.user_answers) >= MyGUI.MaxNumVocables:
-            Selector.idx += 1
-            MyGUI.Buttonfunc_EndSession()
-        else:
-            MyGUI.Buttonfunc_NextVocable()
 
 
 class GUI_control:
@@ -138,7 +69,7 @@ class GUI_control:
         self.height = 1
         self.mode = []
         self.RadioBtns = {}
-        self.RadioBtns["errors"]=[]
+        self.RadioBtns["errors"] = []
         self.MaxNumVocables = []
 
     def Create_Buttons(self):
@@ -152,30 +83,33 @@ class GUI_control:
             self.ButtonLayout = 1
             if self.mode == "nach Fälligkeit":
                 tk.Label(self.frameButtons, text="Erneut fragen in:", font=self.fontLayout, width=self.width,
-                     height=self.height).grid(row=1, column=2)
+                         height=self.height).grid(row=1, column=2)
                 self.Frame_Buttons_delay = tk.Frame(self.frameButtons, width=288, height=45)
                 self.Frame_Buttons_delay.grid(row=2, column=2)
                 LastDelayList = vocables.vocables[Selector.idx]["answers"][self.user]["delay"]
-                LastDelayList.reverse() #reverse once to check from last, because all enties in the "nach Reihenfolge" mode will have a delay of -1 and must be skipped
+                LastDelayList.reverse()  # reverse once to check from last, because all enties in the "nach Reihenfolge" mode will have a delay of -1 and must be skipped
                 LastDelay = []
+
                 for delay in LastDelayList:
                     if delay >= 0:
                         LastDelay = delay
                         break
                 for row in IntervalMatrix:
                     if LastDelay >= row[0] and LastDelay <= row[1]:
-                        self.IntervalMatrixRow = row #find the right row of the delay matrix
-                for id in range(2,5):
+                        self.IntervalMatrixRow = row  # find the right row of the delay matrix
+                for id in range(2, 5):
                     tk.Button(self.Frame_Buttons_delay, text="+" + str(self.IntervalMatrixRow[id]) + "Tage",
                               command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, self.IntervalMatrixRow[id]),
-                              font=self.fontLayout, height=self.height).grid(row=0, column=id-1)
-                self.root.bind("<Return>", lambda event: vocables.NextTime(Selector.idx, MyGUI.user, self.IntervalMatrixRow[2]))
-                LastDelayList.reverse() #must reverse to again to preserve correct entry
+                              font=self.fontLayout, height=self.height).grid(row=0, column=id - 1)
+                self.root.bind("<Return>",
+                               lambda event: vocables.NextTime(Selector.idx, MyGUI.user, self.IntervalMatrixRow[2]))
+                LastDelayList.reverse()  # must reverse to again to preserve correct entry
 
             elif self.mode == "nach Reihenfolge":
-                tk.Button(self.frameButtons, text="Nächste Vokabel", command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 30),
+                tk.Button(self.frameButtons, text="Nächste Vokabel",
+                          command=lambda: vocables.NextTime(Selector.idx, MyGUI.user, 30),
                           font=self.fontLayout, height=self.height, width=self.width).grid(row=0, column=2)
-                self.root.bind("<Return>",lambda event: vocables.NextTime(Selector.idx, MyGUI.user, 30))
+                self.root.bind("<Return>", lambda event: vocables.NextTime(Selector.idx, MyGUI.user, 30))
 
             self.Button_RemoveUserEntry = tk.Button(self.frameButtons, text="Tippfehler",
                                                     font=self.fontLayout, width=self.width, height=self.height,
@@ -183,11 +117,12 @@ class GUI_control:
             self.Button_RemoveUserEntry.grid(row=3, column=2)
 
         elif self.ButtonLayout == 1:
-            self.CheckVocable = tk.Button(MyGUI.frameButtons, text="Eingabe prüfen", font=self.fontLayout, width=self.width,
-                      height=self.height, command=MyGUI.Buttonfunc_CheckEntry)
+            self.CheckVocable = tk.Button(MyGUI.frameButtons, text="Eingabe prüfen", font=self.fontLayout,
+                                          width=self.width,
+                                          height=self.height, command=MyGUI.Buttonfunc_CheckEntry)
             self.CheckVocable.pack()
             tk.Button(self.frameButtons, text="Session beenden", font=self.fontLayout, width=self.width,
-                      height=self.height,command=self.Buttonfunc_EndSession).pack()
+                      height=self.height, command=self.Buttonfunc_EndSession).pack()
             self.root.bind("<Return>", MyGUI.Buttonfunc_CheckEntry_Hotkey)
             self.ButtonLayout = 0
         elif self.ButtonLayout == "MainScreen":
@@ -197,14 +132,15 @@ class GUI_control:
                 widget.destroy()
             for widget in self.frame[1].winfo_children():
                 widget.destroy()
-            self.RadioBtnsContents=[]
-            tk.Label(self.frame[0], text = "Benutzerauswahl:", font = self.fontLayout).pack(anchor = "w", ipadx = 10)
-            self.RadioBtns["user selection"] = tk.StringVar(self.frame[0],value="x")
+            self.RadioBtnsContents = []
+            tk.Label(self.frame[0], text="Benutzerauswahl:", font=self.fontLayout).pack(anchor="w", ipadx=10)
+            self.RadioBtns["user selection"] = tk.StringVar(self.frame[0], value="x")
             optionlist = ["Andreas", "Christa", "Gemeinsam"]
             for option in optionlist:
-                self.RadioBtnsContents.append(tk.Radiobutton(self.frame[0], text=option, variable=self.RadioBtns["user selection"], value=option))
+                self.RadioBtnsContents.append(
+                    tk.Radiobutton(self.frame[0], text=option, variable=self.RadioBtns["user selection"], value=option))
                 self.RadioBtnsContents[-1].config(font=self.fontLayout)
-                self.RadioBtnsContents[-1].pack(side = 'top', anchor = 'w', ipadx = 30)
+                self.RadioBtnsContents[-1].pack(side='top', anchor='w', ipadx=30)
 
             tk.Label(self.frame[0], text="Vorgabe auf:", font=self.fontLayout).pack(anchor="w", ipadx=10)
             self.RadioBtns["language"] = tk.StringVar(self.frame[0], value="x")
@@ -223,8 +159,8 @@ class GUI_control:
                     tk.Radiobutton(self.frame[1], text=option, variable=self.RadioBtns["mode"], value=option))
                 self.RadioBtnsContents[-1].config(font=self.fontLayout)
                 self.RadioBtnsContents[-1].pack(side='top', anchor='w', ipadx=30)
-            tk.Label(self.frame[1], text = "Maximale Abfragen bei Reihenfolge:", font = self.fontLayout).pack()
-            self.MaxNumVocables=tk.Entry(self.frame[1], font = self.fontLayout)
+            tk.Label(self.frame[1], text="Maximale Abfragen bei Reihenfolge:", font=self.fontLayout).pack()
+            self.MaxNumVocables = tk.Entry(self.frame[1], font=self.fontLayout)
             self.MaxNumVocables.pack()
 
             self.SelectLecture = tk.Button(MyGUI.frameButtons, text="Lektion auswählen", font=self.fontLayout,
@@ -234,7 +170,8 @@ class GUI_control:
                 self.SelectLecture.invoke()
 
             if read_old_data == 1:
-                tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout, command=self.Buttonfunc_ReadOldData).pack()
+                tk.Button(self.frameButtons, text="Read Old Data (Andreas)", font=self.fontLayout,
+                          command=self.Buttonfunc_ReadOldData).pack()
             self.ButtonLayout = 1
 
         elif self.ButtonLayout == 5:
@@ -258,13 +195,13 @@ class GUI_control:
         vocables.vocables[Selector.idx]["answers"][MyGUI.user]["correctness"][-1] = "Richtig"
         self.Button_RemoveUserEntry.destroy()
 
-    def Buttonfunc_Userselection(self,username):
+    def Buttonfunc_Userselection(self, username):
         self.user = username
         ### Check for due vocables
         if self.user in vocables.vocables[0]:
             Selector.idx = vocables.vocables[0][self.user]["last_stop"]  # continue from last if simply cycling through
         else:
-            vocables.vocables[0][self.user]={}
+            vocables.vocables[0][self.user] = {}
             vocables.vocables[0][self.user]["last_stop"] = 0
         List_Due_Vocables = []
         for i in range(len(vocables.vocables)):
@@ -276,7 +213,8 @@ class GUI_control:
         Selector.NumbersOfEnteties(List_Due_Vocables)
         # Selector.IDs=-1
         # Selector.NextEntity()
-    def Buttonfunc_CheckEntry_Hotkey(self,event):
+
+    def Buttonfunc_CheckEntry_Hotkey(self, event):
         self.Buttonfunc_CheckEntry()
 
     def Buttonfunc_CheckEntry(self):
@@ -308,15 +246,16 @@ class GUI_control:
             tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout + (" bold",),
                      text="Kommentar: " + vocables.vocables[Selector.idx].get("kommentar")).pack()
         tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout,
-                 text="Dies ist Vokabel " + str(1 + len(self.user_answers)) + "/" + str(self.MaxNumVocables) + " der Session").pack()
-        if Selector.listID == 0: # Abfragen nach Reihenfolge
+                 text="Dies ist Vokabel " + str(1 + len(self.user_answers)) + "/" + str(
+                     self.MaxNumVocables) + " der Session").pack()
+        if Selector.listID == 0:  # Abfragen nach Reihenfolge
             tk.Label(MyGUI.frame[0], font=MyGUI.fontLayout,
                      text="bzw. " + str(Selector.idx + 1) + "/" + str(
                          len(Selector.Entities[Selector.listID])) + " der Datenbank").pack()
         self.Create_Buttons()
 
     def Buttonfunc_AddVocables(self):
-        AddedPath=filedialog.askopenfilename()
+        AddedPath = filedialog.askopenfilename()
         if AddedPath[-3:] != "txt" and AddedPath[-3:] != "tsv":
             print("Es können nur Txt Dateien hinzugefügt werden (Komma getrennt, Tabstopp getrennt)")
         else:
@@ -328,7 +267,7 @@ class GUI_control:
                         exists = 1
                         print(item["deutsch"][0] + " exists already")
                 if exists == 0:
-                    vocables.vocables.insert(randrange(len(vocables.vocables)-1), item)
+                    vocables.vocables.insert(randrange(len(vocables.vocables) - 1), item)
                     print(item["deutsch"][0] + " newly added to the database")
             self.Buttonfunc_saving()
 
@@ -337,7 +276,7 @@ class GUI_control:
         if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
             vocables.vocables = InitializeOldData(self.path)
         Selector.NumbersOfEnteties(range(len(vocables.vocables)))
-        tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
+        tk.Button(MyGUI.frameButtons, text="Weiter", font=self.fontLayout, command=MyGUI.Buttonfunc_Continue).pack()
 
     def Buttonfunc_SelectLecture(self):
         # select vocabulary file and open it
@@ -349,8 +288,8 @@ class GUI_control:
             self.path = filedialog.askopenfilename()
         LecName = self.path.split("/")
         LecName = LecName[-1].split(".")
-        tk.Label(self.frame[1], text = "", font = self.fontLayout).pack()
-        tk.Label(self.frame[1], text = LecName[0], font = self.fontLayout, fg = "#0000FF").pack()
+        tk.Label(self.frame[1], text="", font=self.fontLayout).pack()
+        tk.Label(self.frame[1], text=LecName[0], font=self.fontLayout, fg="#0000FF").pack()
         print(self.path)
         if self.path != "":
             if self.path[-3:] == "txt" or self.path[-3:] == "tsv":
@@ -364,13 +303,18 @@ class GUI_control:
                     vocables.vocables = json.load(json_file)
             Selector.NumbersOfEnteties(range(len(vocables.vocables)))
             self.SelectLecture.pack_forget()
-            tk.Button(MyGUI.frameButtons, text="Weiter", width=2*self.width, height=self.height, font=self.fontLayout,command=MyGUI.Buttonfunc_Continue).pack()
-            tk.Button(self.frameButtons, text="Einträge ändern", width=2*self.width, height=self.height, font=self.fontLayout,
+            tk.Button(MyGUI.frameButtons, text="Weiter", width=2 * self.width, height=self.height, font=self.fontLayout,
+                      command=MyGUI.Buttonfunc_Continue).pack()
+            tk.Button(self.frameButtons, text="Einträge ändern", width=2 * self.width, height=self.height,
+                      font=self.fontLayout,
                       command=self.Buttonfunc_ChangeManagement).pack()
-            tk.Button(self.frameButtons, text="Weitere Vokabeln aus .TSV hinzufügen", width=2*self.width, height=self.height, font=self.fontLayout,
+            tk.Button(self.frameButtons, text="Weitere Vokabeln aus .TSV hinzufügen", width=2 * self.width,
+                      height=self.height, font=self.fontLayout,
                       command=self.Buttonfunc_AddVocables).pack()
-            tk.Label(self.frameButtons, text="Deutsch | Spanisch | Kommentar | Fällig Andreas YYYY-MM-DD | Fällig Christa YYYY-MM-DD").pack()
-            tk.Button(self.frameButtons, text="Datenbank als .TSV speichern", width=2*self.width, height=self.height, font=self.fontLayout,
+            tk.Label(self.frameButtons,
+                     text="Deutsch | Spanisch | Kommentar | Fällig Andreas YYYY-MM-DD | Fällig Christa YYYY-MM-DD").pack()
+            tk.Button(self.frameButtons, text="Datenbank als .TSV speichern", width=2 * self.width, height=self.height,
+                      font=self.fontLayout,
                       command=self.Buttonfunc_saveTSV).pack()
 
     def Buttonfunc_saveTSV(self):
@@ -392,7 +336,6 @@ class GUI_control:
                     writer.writerow([deutsch[:-2], spanisch[:-2], kommentar])
             print("Created File " + self.path[:-5] + "_export.csv")
 
-
     def Buttonfunc_ChangeManagement(self):
         for widget in self.frameButtons.winfo_children():
             widget.destroy()
@@ -400,43 +343,52 @@ class GUI_control:
             widget.destroy()
         for widget in self.frame[1].winfo_children():
             widget.destroy()
-        tk.Label(self.frame[0], text="SUCHE:",font=self.fontLayout).grid(row=1, column=1)
+        tk.Label(self.frame[0], text="SUCHE:", font=self.fontLayout).grid(row=1, column=1)
         Attributes = ["Deutsch:", "Spanisch:", "Kommentar:"]
         i = 0
-        SearchEntries=[]
+        SearchEntries = []
         for item in Attributes:
             i += 1
-            tk.Label(self.frame[0], text=item, font=self.fontLayout, anchor="w").grid(row=i+1, column=1, sticky="W")
+            tk.Label(self.frame[0], text=item, font=self.fontLayout, anchor="w").grid(row=i + 1, column=1, sticky="W")
             SearchEntries.append(tk.Entry(self.frame[0], font=self.fontLayout))
-            SearchEntries[-1].grid(row=i+1, column=2)
+            SearchEntries[-1].grid(row=i + 1, column=2)
         tk.Label(self.frame[1], text="Gefunden:").grid(row=1, column=1)
         i = 0
-        FoundEntries=[]
+        FoundEntries = []
         for item in Attributes:
             i += 1
-            tk.Label(self.frame[1], text=item, font=self.fontLayout, anchor="w").grid(row=i*2, column=1, sticky="W")
+            tk.Label(self.frame[1], text=item, font=self.fontLayout, anchor="w").grid(row=i * 2, column=1, sticky="W")
             FoundEntries.append(tk.Entry(self.frame[1], font=self.fontLayout, width=30))
-            FoundEntries[-1].grid(row=2*i+1, column=1, columnspan=2)
+            FoundEntries[-1].grid(row=2 * i + 1, column=1, columnspan=2)
         tk.Button(self.frame[1], text="Nächstes", font=self.fontLayout,
-                  command= lambda: CM.next(FoundEntries)).grid(row=8,column=2, sticky="W")
+                  command=lambda: CM.next(FoundEntries)).grid(row=8, column=2, sticky="W")
         tk.Button(self.frame[1], text="Vorheriges", font=self.fontLayout,
-                  command= lambda: CM.previous(FoundEntries)).grid(row=8,column=1, sticky="E")
+                  command=lambda: CM.previous(FoundEntries)).grid(row=8, column=1, sticky="E")
         tk.Button(self.frame[1], text="Speichern", font=self.fontLayout,
-                  command=lambda: self.Buttonfunc_CM_save(FoundEntries)).grid(row=9,column=1,columnspan=2)
+                  command=lambda: self.Buttonfunc_CM_save(FoundEntries)).grid(row=9, column=1, columnspan=2)
         tk.Button(self.frame[0], text="Suchen", font=self.fontLayout,
-                  command=lambda: self.Buttonfunc_Suchen(SearchEntries[0].get(),SearchEntries[1].get(),SearchEntries[2].get(),vocables.vocables,FoundEntries)).grid(row=5,column=1,columnspan=2)
+                  command=lambda: self.Buttonfunc_Suchen(SearchEntries[0].get(), SearchEntries[1].get(),
+                                                         SearchEntries[2].get(), vocables.vocables, FoundEntries)).grid(
+            row=5, column=1, columnspan=2)
         self.ButtonLayout = "MainScreen"
-        tk.Button(self.frameButtons, text="Zurück zum Hauptmenü", font=self.fontLayout, command=self.Create_Buttons).pack()
+        tk.Button(self.frameButtons, text="Zurück zum Hauptmenü", font=self.fontLayout,
+                  command=self.Create_Buttons).pack()
+
     def Buttonfunc_Suchen(self, deutsch, spanisch, kommentar, vokabeln, FoundEntries):
         CM.AddVokabeln(vokabeln)
         CM.Search(deutsch, spanisch, kommentar)
         if CM.IDs == []:
-            tk.Label(self.frame[1], text="Eintrag nicht gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
-        elif len(CM.IDs)>1:
-            tk.Label(self.frame[1], text=str(len(CM.IDs)) + " Einträge gefunden", anchor="w", fg="RED").grid(row=1, column=1,columnspan=2, sticky="W")
+            tk.Label(self.frame[1], text="Eintrag nicht gefunden", anchor="w", fg="RED").grid(row=1, column=1,
+                                                                                              columnspan=2, sticky="W")
+        elif len(CM.IDs) > 1:
+            tk.Label(self.frame[1], text=str(len(CM.IDs)) + " Einträge gefunden", anchor="w", fg="RED").grid(row=1,
+                                                                                                             column=1,
+                                                                                                             columnspan=2,
+                                                                                                             sticky="W")
         CM.display(FoundEntries)
+
     def Buttonfunc_CM_save(self, FoundEntries):
-        i=0
+        i = 0
         for key in ["deutsch", "spanisch", "kommentar"]:
             if key != "kommentar":
                 content = FoundEntries[i].get().split(",")
@@ -453,42 +405,42 @@ class GUI_control:
             vocables.vocables[CM.IDs[CM.idx]][key] = content
         self.Buttonfunc_saving()
 
-
     def Buttonfunc_Continue(self):
         for error in self.RadioBtns["errors"]:
             error.pack_forget()
         errors = 0
         if self.RadioBtns["user selection"].get() == "x":
             self.RadioBtns["errors"].append(tk.Label(self.frame[1], text="Bitte Benutzer auswählen!", fg="RED"))
-            self.RadioBtns["errors"][-1].pack(anchor = "w")
+            self.RadioBtns["errors"][-1].pack(anchor="w")
             errors = 1
         else:
             self.Buttonfunc_Userselection(self.RadioBtns["user selection"].get())
 
         if self.RadioBtns["language"].get() == "x":
             self.RadioBtns["errors"].append(tk.Label(self.frame[1], text="Bitte Sprache auswählen!", fg="RED"))
-            self.RadioBtns["errors"][-1].pack(anchor = "w")
+            self.RadioBtns["errors"][-1].pack(anchor="w")
             errors = 1
-        elif self.RadioBtns["language"].get()=="deutsch":
+        elif self.RadioBtns["language"].get() == "deutsch":
             self.languagemode = 0
-        elif self.RadioBtns["language"].get()=="spanisch":
+        elif self.RadioBtns["language"].get() == "spanisch":
             self.languagemode = 1
 
         if self.RadioBtns["mode"].get() == "x":
             self.RadioBtns["errors"].append(tk.Label(self.frame[1], text="Bitte Modus auswählen!", fg="RED"))
-            self.RadioBtns["errors"][-1].pack(anchor = "w")
+            self.RadioBtns["errors"][-1].pack(anchor="w")
             errors = 1
-        elif (self.RadioBtns["mode"].get() == "nach Reihenfolge") and (self.MaxNumVocables.get()==""):
+        elif (self.RadioBtns["mode"].get() == "nach Reihenfolge") and (self.MaxNumVocables.get() == ""):
             self.RadioBtns["errors"].append(tk.Label(self.frame[1], text="Bitte Maximal Anzahl eingeben!", fg="RED"))
-            self.RadioBtns["errors"][-1].pack(anchor = "w")
+            self.RadioBtns["errors"][-1].pack(anchor="w")
             errors = 1
         else:
             self.mode = self.RadioBtns["mode"].get()
 
         if (self.RadioBtns["user selection"].get() != "x"):
             if (len(Selector.Entities[1]) == 0) and (self.RadioBtns["mode"].get() == "nach Fälligkeit"):
-                self.RadioBtns["errors"].append(tk.Label(self.frame[1], text="Keine Vokabeln für heute fällig!", fg="RED"))
-                self.RadioBtns["errors"][-1].pack(anchor = "w")
+                self.RadioBtns["errors"].append(
+                    tk.Label(self.frame[1], text="Keine Vokabeln für heute fällig!", fg="RED"))
+                self.RadioBtns["errors"][-1].pack(anchor="w")
                 errors = 1
 
         if errors == 0:
@@ -514,14 +466,14 @@ class GUI_control:
                  justify="left", anchor="w").pack()
         tk.Label(self.frame[0],
                  text=str(len([i for i, x in enumerate(MyGUI.user_answers) if x == "Falsch"])) + " falsch").pack()
-        tk.Label(self.frame[0], text="Das hier war der " + str(len(Selector.Entities)-1) + ". Durchgang.").pack()
+        tk.Label(self.frame[0], text="Das hier war der " + str(len(Selector.Entities) - 1) + ". Durchgang.").pack()
         repeatedVocs = self.user_answers_NumVocables
         if len(Selector.Entities) > 1:
-            for i in range(2,len(Selector.Entities)):
+            for i in range(2, len(Selector.Entities)):
                 repeatedVocs = repeatedVocs + len(Selector.Entities[i])
         tk.Label(self.frame[0], text="Insgesamt hast du " + str(repeatedVocs) + " Fragen beantwortet.").pack()
         self.ButtonLayout = 5
-        if Selector.listID==0:
+        if Selector.listID == 0:
             vocables.vocables[0][self.user]["last_stop"] = Selector.idx
         self.Create_Buttons()
 
@@ -529,23 +481,23 @@ class GUI_control:
         New_Indexes = []
         print("Started to answer wrong vocables from the previous go-through")
         for i in range(len(self.user_answers)):
-            if (self.user_answers[i] == "Falsch") and self.mode == "nach Fälligkeit" :
+            if (self.user_answers[i] == "Falsch") and self.mode == "nach Fälligkeit":
                 New_Indexes.append(self.user_answers_idx[i])
             elif (self.user_answers[i] == "Falsch") and self.mode == "nach Reihenfolge":
                 New_Indexes.append(self.user_answers_idx[i])
             elif (self.user_answers[i] == "Falsch") and (Selector.listID > 1):
                 New_Indexes.append(self.user_answers_idx[i])
-        self.MaxNumVocables=len(New_Indexes)
+        self.MaxNumVocables = len(New_Indexes)
         print("List of IDs that have been answered in the past round:")
         print(self.user_answers_idx)
         self.user_answers_idx = []
         print("List of IDs corresponding to false answers:")
         print(New_Indexes)
-        Selector.IDs=-1
+        Selector.IDs = -1
         Selector.NumbersOfEnteties(New_Indexes)
-        self.user_answers=[]
-        self.user2_answers=[]
-        Selector.listID=len(Selector.Entities)-1
+        self.user_answers = []
+        self.user2_answers = []
+        Selector.listID = len(Selector.Entities) - 1
         self.Buttonfunc_NextVocable()
         MyGUI.ButtonLayout = 1
         MyGUI.Create_Buttons()
@@ -554,7 +506,6 @@ class GUI_control:
         self.Buttonfunc_saving()
         self.restart = True
         self.root.destroy()
-
 
     def Buttonfunc_Save_Exit(self):
         self.Buttonfunc_saving()
@@ -575,15 +526,14 @@ class GUI_control:
                     json.dump(vocables.vocables, fp)
 
 
-
 class C_selection:
     def __init__(self):
-        self.IDs = -1 # das hier ist einfach ein zähler
-        self.idx = -1   # das hier ist der entsprechende index nach der korrelationsliste, die in Entities abelegt werden kann/soll
-                        # --> Entities[1] enthält die indices der fälligen vokabeln
-        self.listID = 1 # listID 1 corresponds to mode "nach Fälligkeit"
-                        # listID 0 corresponds to mode "nach Reihenfolge"
-                        # listID > 1 corresponds to additional runs through wrong answered vocables
+        self.IDs = -1  # das hier ist einfach ein zähler
+        self.idx = -1  # das hier ist der entsprechende index nach der korrelationsliste, die in Entities abelegt werden kann/soll
+        # --> Entities[1] enthält die indices der fälligen vokabeln
+        self.listID = 1  # listID 1 corresponds to mode "nach Fälligkeit"
+        # listID 0 corresponds to mode "nach Reihenfolge"
+        # listID > 1 corresponds to additional runs through wrong answered vocables
         self.Entities = []
 
     def NumbersOfEnteties(self, NumberOfEnteties):
@@ -600,7 +550,7 @@ class C_selection:
             MyGUI.MaxNumVocables = len(self.Entities[self.listID])
         elif MyGUI.mode == "nach Reihenfolge" and type(MyGUI.MaxNumVocables) != int:
             MyGUI.MaxNumVocables = int(MyGUI.MaxNumVocables)
-        if MyGUI.mode == "nach Reihenfolge" and self.IDs >=len(self.Entities[0]):
+        if MyGUI.mode == "nach Reihenfolge" and self.IDs >= len(self.Entities[0]):
             self.IDs = 0
         self.idx = self.Entities[self.listID][self.IDs]
         print("Asking vocable >> " + vocables.vocables[self.idx]["deutsch"][0] + " << at ID " + str(self.idx))
@@ -625,7 +575,8 @@ def ParseTxt_toDicts(path):
             stringsSpanisch = strings[1]
             stringsSpanisch = stringsSpanisch.strip().split(
                 ",")  # the strip cmd removes trailing \n, which couldn't get removed by other means
-            for id2 in range(len(stringsSpanisch)):  # check and add single "a" to previous entry b/c its just declanation
+            for id2 in range(
+                    len(stringsSpanisch)):  # check and add single "a" to previous entry b/c its just declanation
                 if stringsSpanisch[id2] == "a":
                     stringsSpanisch[id2 - 1] = stringsSpanisch[id2 - 1] + ",a"
             while "a" in stringsSpanisch: stringsSpanisch.remove("a")
@@ -658,6 +609,7 @@ def ParseTxt_toDicts(path):
             print("There is an Issue with your .TSV: Number of columns != 5")
     return (ListOfDicts)
 
+
 def InitializeOldData(path):
     ListOfDicts = []
     file = open(path, "r+", encoding='utf-8')
@@ -675,47 +627,43 @@ def InitializeOldData(path):
         if stringsSpanisch[-1] == "":
             del stringsSpanisch[-1]
         IntDueA = int(strings[3])
-        IntDueA = dt.today() + dtt.timedelta(IntDueA-1629)
+        IntDueA = dt.today() + dtt.timedelta(IntDueA - 1629)
         IntDelayA = int(strings[4].strip())
         IntDueC = int(strings[5])
-        IntDueC = dt.today() + dtt.timedelta(IntDueC-1629)
+        IntDueC = dt.today() + dtt.timedelta(IntDueC - 1629)
         IntDelayC = int(strings[6].strip())
 
         ListOfDicts.append({
-            "spanisch" : stringsSpanisch,
-            "deutsch" : stringsDeutsch,
-            "kommentar" : stringsKommentar,
-            "answers" : {
+            "spanisch": stringsSpanisch,
+            "deutsch": stringsDeutsch,
+            "kommentar": stringsKommentar,
+            "answers": {
                 "Andreas": {
-                    "datetime" :    [""],
-                    "answer" :      [stringsAnswer],
-                    "delay" :       [IntDelayA],
-                    "correctness" : ["Richtig"],
-                    "NextTime" :    IntDueA.strftime("%Y-%m-%d")
+                    "datetime": [""],
+                    "answer": [stringsAnswer],
+                    "delay": [IntDelayA],
+                    "correctness": ["Richtig"],
+                    "NextTime": IntDueA.strftime("%Y-%m-%d")
                 },
                 "Christa": {
-                    "datetime":     [""],
-                    "answer":       [stringsAnswer],
-                    "delay":        [IntDelayC],
-                    "correctness":  ["Richtig"],
-                    "NextTime":     IntDueC.strftime("%Y-%m-%d")
+                    "datetime": [""],
+                    "answer": [stringsAnswer],
+                    "delay": [IntDelayC],
+                    "correctness": ["Richtig"],
+                    "NextTime": IntDueC.strftime("%Y-%m-%d")
                 }
             }
         })
-        ListOfDicts[0]["Andreas"]={"last_stop": 0}
-        ListOfDicts[0]["Christa"]={"last_stop": 0}
+        ListOfDicts[0]["Andreas"] = {"last_stop": 0}
+        ListOfDicts[0]["Christa"] = {"last_stop": 0}
     return ListOfDicts
 
-
-
-
-
-            # self.vocables[id]["answers"][user] = {}
-            # self.vocables[id]["answers"][user]["datetime"] = []
-            # self.vocables[id]["answers"][user]["answer"] = []
-            # self.vocables[id]["answers"][user]["delay"] = []
-            # self.vocables[id]["answers"][user]["correctness"] = []
-            # vocables.vocables[0][self.user]["last_stop"] = 0
+    # self.vocables[id]["answers"][user] = {}
+    # self.vocables[id]["answers"][user]["datetime"] = []
+    # self.vocables[id]["answers"][user]["answer"] = []
+    # self.vocables[id]["answers"][user]["delay"] = []
+    # self.vocables[id]["answers"][user]["correctness"] = []
+    # vocables.vocables[0][self.user]["last_stop"] = 0
 
 
 MyGUI = GUI_control()

@@ -6,31 +6,45 @@ from datetime import datetime as dt
 import os as os
 import csv
 import math
+from database import Database
+from VT_logger import logger
 
 
-
-def AddVocables(vocables, path):
-    if path == "":
-        path = filedialog.askopenfilename()
-    if path[-3:] != "txt" and path[-3:] != "tsv":
-        print("Es können nur Txt Dateien hinzugefügt werden (Komma getrennt, Tabstopp getrennt)")
+def AddVocables(vocables, path_add, path):
+    if path_add == "":
+        path_add = filedialog.askopenfilename(filetypes=[("TSV Files", "*.tsv *.txt")])
+    if path_add[-3:] != "txt" and path_add[-3:] != "tsv":
+        logger.warning("User somehow managed to try and load a file with neither txt nor tsv extension")
     else:
-        NewVocs = ParseTxt_toDicts(path)
-        NewVocsClassed = []
+        NewVocs = ParseTxt_toDicts(path_add)
+    if len(NewVocs) == 0:
+        logger.warning("Could not parse any vocables from the TSV!")
+    else:
+        db = Database(path)
         for entry in NewVocs:
-            NewVocsClassed.append(C_vocables.C_vocables(entry))
-        for i, item in zip(range(len(NewVocsClassed)), NewVocsClassed):
-            exists = 0
-            for olditem in vocables:
-                if item.content["deutsch"] == olditem.content["deutsch"] and item.content["spanisch"] == olditem.content["spanisch"] and item.content["kommentar"] == olditem.content["kommentar"]:
-                    exists = 1
-                    print(item.content["deutsch"][0] + " exists already")
-            if exists == 0:
-                vocables.insert(math.floor(i*len(vocables) / len(NewVocs)), item)
-                #print(item.content["deutsch"][0] + " newly added to the database")
+            prev_entry = db.find_vocable(
+                ", ".join(entry["deutsch"]),
+                ", ".join(entry["spanisch"]),
+                entry["kommentar"]
+            )
+            if len(prev_entry) > 0:
+                logger.warning("Trying to add existing vocable to the database, matching vocID "
+                               + str(prev_entry[0][0]))
+            else:
+                db.add_vocable(", ".join(entry["deutsch"]), ", ".join(entry["spanisch"]), entry["kommentar"])
+                new_vocID = \
+                    db.find_vocable(", ".join(entry["deutsch"]), ", ".join(entry["spanisch"]), entry["kommentar"])
+                for user in ["Andreas", "Christa", "Gemeinsam"]:
+                    db.add_lessons_entry(user, "Alles", new_vocID[0][0], entry["answers"][user]["NextTime"])
+                logger.debug("Added vocable " + ", ".join(entry["deutsch"]) + " to the database")
     return vocables
 
-def CheckEntry(Answers, vocable, requested, user, selector, vocable0):
+
+def CheckEntry(Answers, vocable, requested, user, selector, path, mode):
+    if not selector.idx == [] and mode == "nach Reihenfolge" and len(selector.Entities) == 2:
+        logger.debug('Setting new last_stop to ' + str(selector.idx))
+        db = Database(path)
+        db.set_lessons_last_stop(user, 'Alles', selector.idx)
     RecentAnswer = []
     label_colors = []
     for Answer in Answers:
@@ -45,11 +59,13 @@ def CheckEntry(Answers, vocable, requested, user, selector, vocable0):
                 CorrectInstance2 += 1
         if CorrectInstance == 0:
                 label_colors.append("#FF0000") #no combination matched --> wrong Answer
-    vocable.EnterResults(RecentAnswer, CorrectInstance2, user)
-    correctness = vocable.content["answers"][user]["correctness"][-1]
-    if selector.listID == 0:
-        vocable0.content[user]["last_stop"] = selector.idx
-    return vocable, label_colors, correctness, vocable0
+    if CorrectInstance2 == len(RecentAnswer):
+        correctness = 'Richtig'
+    else:
+        correctness = 'Falsch'
+    answer_datetime = vocable.EnterResults(RecentAnswer, correctness, user, path)
+    return label_colors, correctness, answer_datetime
+
 
 def EndSession(answers, num_vocables, num_total):
     if num_vocables < 0:
@@ -59,18 +75,33 @@ def EndSession(answers, num_vocables, num_total):
     num_total += len(answers)
     return num_vocables, corrects, falses, num_total
 
-def intervals(vocable, IntervalMatrix, user):
-    LastDelaysList = list(vocable.content["answers"][user]["delay"])
-    while -1 in LastDelaysList:
-        LastDelaysList.remove(-1)
-    for row in IntervalMatrix:
-        if LastDelaysList[-1] >= row[0] and LastDelaysList[-1] <= row[1]:
-            IntervalMatrixRow = row[2:]  # find the right row of the delay matrix
-    return IntervalMatrixRow
 
-def NextVocable(Selector, mode, last_stop, language, vocables):
-    Selector.NextEntity(mode, last_stop)
-    vocable = vocables[Selector.idx].content
+def intervals(vocable, IntervalMatrix, user):
+    # for key in vocable.content:
+    #     print("content keys: " + key)
+    # LastDelaysList = list(vocable.content["answers"][user]["delay"])
+    # while -1 in LastDelaysList:
+    #     LastDelaysList.remove(-1)
+    last_delay = vocable.content['delay']
+    for row in IntervalMatrix:
+        if last_delay >= row[0] and last_delay <= row[1]:
+            logger.debug('Old Delay was ' + str(last_delay) + ', new choices are ' + str(row[2]) + ", "
+            + str(row[3]) + ", " + str(row[4]))
+            return row[2:]  # find the right row of the delay matrix
+
+
+def NextVocable(Selector, mode, path, user, language, vocables, MaxNumVocables):
+    db = Database(path)
+    last_stop = db.read_lesson_last_stop(user, 'Alles')
+    Selector.last_stop = last_stop[0][0]
+    Selector.NextEntity(mode)
+    logger.debug("Trying to find vocable with vocID " + str(Selector.idx))
+    for vocable0 in vocables:
+        if vocable0.content['vocID'] == Selector.idx:
+            logger.debug("found!")
+            vocable = vocable0.content
+            current_vocable = vocable0
+            break
     if language == 0:
         presented = vocable["deutsch"]
         requested = vocable["spanisch"]
@@ -78,25 +109,66 @@ def NextVocable(Selector, mode, last_stop, language, vocables):
         presented = vocable["spanisch"]
         requested = vocable["deutsch"]
     kommentar = vocable["kommentar"]
-    return presented, requested, kommentar
+    if mode == "nach Fälligkeit":
+        MaxNumVocables = len(Selector.Entities[-1])
+    return presented, requested, kommentar, MaxNumVocables, current_vocable
 
-def LoadData(path, Selector):
+
+def LoadData(path, Selector, user = "Andreas"):
     ListOfObjects = []
-    #print("loading data in functions")
-    if path != "":
-        if path[-3:] == "txt" or path[-3:] == "tsv":
-            if os.path.isfile(path[:-3] + "json"):
-                with open(path[:-3] + "json", encoding='UTF8') as json_file:
-                    vocablesDict = json.load(json_file)
-            else:
-                vocablesDict = ParseTxt_toDicts(path)
-        elif path[-4:] == "json":
-            with open(path, encoding='UTF8') as json_file:
+    path_no_ending, file_extension = path.split(".")
+    path = path_no_ending + ".db" # work with db in future
+    if not os.path.isfile(path):
+        if os.path.isfile(path_no_ending + ".json"):
+            with open(path_no_ending + ".json", encoding='UTF8') as json_file:
                 vocablesDict = json.load(json_file)
-    for entry in vocablesDict:
-        ListOfObjects.append(C_vocables.C_vocables(entry))
-    Selector.NumbersOfEnteties(range(len(ListOfObjects)))
+        elif os.path.isfile(path_no_ending + ".tsv"):
+            vocablesDict = ParseTxt_toDicts(path_no_ending + ".tsv")
+        for entry in vocablesDict:
+            ListOfObjects.append(C_vocables.C_vocables(entry))
+    db = Database(path)
+    if len(ListOfObjects) > 0:
+        db.convert_JSON(ListOfObjects)
+
+    # load with different priorities, use db if exists, use json if not, use tsv or txt if no json exists
+    # old file formats are converted to db and will solely be used in the future
+    ListOfObjects = []
+    ListOfVocIDs = []
+    ListOfDueVocIDs = []
+    for vocID in db.read_lesson_vocIDs(user, "Alles"):
+        entry = db.read_vocable_byID(vocID[0])
+        if len(entry) > 0:
+            entry_dict = {
+                'vocID': entry[0][0],
+                'deutsch': entry[0][1].split(", "),
+                'spanisch': entry[0][2].split(", "),
+                'kommentar': entry[0][3]
+            }
+            ListOfVocIDs.append(entry_dict['vocID'])
+            entry_faellig = db.read_lessons_entry_byVocID(user, "Alles", entry_dict['vocID'])
+            entry_dict['delay'] = entry_faellig[0][1]
+            entry_dict["NextTime"] = entry_faellig[0][2]
+            if dt.today() >= dt.strptime(entry_dict["NextTime"], "%Y-%m-%d"):
+                ListOfDueVocIDs.append(entry_dict['vocID'])
+            ListOfObjects.append(C_vocables.C_vocables(entry_dict))
+            logger.debug(
+                'Loaded vocables vocID ' + str(entry_dict['vocID'])
+                + ', deutsch: ' + ", ".join(entry_dict['deutsch'])
+                + ', spanisch: ' + ", ".join(entry_dict['spanisch'])
+                + ', kommentar: ' + entry_dict['kommentar']
+                + ', last delay was: ' + str(entry_dict['delay'])
+                + ', next time on: ' + entry_dict["NextTime"]
+            )
+        else:
+            logger.warning("You tried to load an entry that has vocIDref " + str(vocID[0]) + " in the lesson "
+                           + user + "_lesson_Alles, but it does not exist in the vocable table")
+            logger.warning("Removing entry from user " + user + "lessons 'Alles'")
+            try: db.delete_lesson_entry_byVocID(user, "Alles", vocID[0])
+            except: pass
+    Selector.NumbersOfEnteties(ListOfVocIDs)
+    Selector.NumbersOfEnteties(ListOfDueVocIDs)
     return path, ListOfObjects, Selector
+
 
 def ParseTxt_toDicts(path):
     ListOfDicts = []
@@ -151,6 +223,7 @@ def ParseTxt_toDicts(path):
             print("There is an Issue with your .TSV: Number of columns != 5")
     return (ListOfDicts)
 
+
 def Repeat_Wrong_Answers(answers, answers_idxs, selector):
     New_indexes = []
     for answer, answer_idx in zip(answers, answers_idxs):
@@ -162,6 +235,7 @@ def Repeat_Wrong_Answers(answers, answers_idxs, selector):
     answers = []
     answers_idxs = []
     return answers, answers_idxs, selector, len(New_indexes)
+
 
 def saving(path, vocables, nice_JSON):
     vocable_list = []
@@ -180,6 +254,7 @@ def saving(path, vocables, nice_JSON):
             else:
                 json.dump(vocable_list, fp)
 
+
 def saveTSV(vocables, path):
     TSV_lines = []
     for vocable in vocables:
@@ -191,10 +266,11 @@ def saveTSV(vocables, path):
         for word in vocable.content["spanisch"]:
             spanisch += word + ", "
         TSV_lines.append([deutsch, spanisch, kommentar])
-    with open(path + "_export.tsv", mode='w', encoding='UTF8', newline='') as exportfile:
+    with open(path, mode='w', encoding='UTF8', newline='') as exportfile:
         writer = csv.writer(exportfile, delimiter='\t')
         for line in TSV_lines:
             writer.writerow(line)
+
 
 def tippfehler(vocable, user, answers):
     vocable.content["answers"][user]["correctness"][-1] = "Richtig"
@@ -205,42 +281,3 @@ def tippfehler(vocable, user, answers):
     answers[-1] = "Richtig"
     return vocable, answers
 
-def Userselection(user, vocables, Selector):
-    ### Check for due vocables
-    if user not in vocables[0].content:
-        vocables[0].content[user] = {}
-        vocables[0].content[user]["last_stop"] = 0
-    List_Due_Vocables = []
-    for i in range(len(vocables)):
-        try:
-            if dt.today() >= dt.strptime(vocables[i].content["answers"][user]["NextTime"], "%Y-%m-%d"):
-                List_Due_Vocables.append(i)
-        except:
-            pass
-    Selector.NumbersOfEnteties(List_Due_Vocables)
-    MaxEntries = len(List_Due_Vocables)
-    return vocables, Selector, MaxEntries
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def testfunction(widget):
-    testlabel = tk.Label(widget, text="test")
-    return testlabel
-
-def testmethod(testclass):
-    return testclass.testaction()

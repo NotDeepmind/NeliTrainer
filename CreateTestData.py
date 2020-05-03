@@ -3,12 +3,14 @@ import json
 from datetime import datetime as dt
 import datetime as dtt
 import csv
+from database import Database
+import C_vocables
 
 TestData = []
 NextTime = dt.today() + dtt.timedelta(1)
 TestData.append({
         "spanisch": ["sTest1-1R"], "deutsch": ["dTest1-1R"], "kommentar": "Erster Eintrag",
-        "Andreas": {"last_stop": 8}, "Christa": {"last_stop": 2},
+        "Andreas": {"last_stop": 8}, "Christa": {"last_stop": 3},
         "answers": {
             "Andreas": {"datetime": [""], "answer": [""], "delay": [100], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")},
             "Christa": {"datetime": [""], "answer": [""], "delay": [100], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")}
@@ -71,8 +73,14 @@ TestData.append({
             "Christa": {"datetime": [""], "answer": [""], "delay": [30], "correctness": ["Richtig"], "NextTime": NextTime.strftime("%Y-%m-%d")}
         }
     })
-with open(os.path.dirname(os.path.abspath(__file__)) + r"\Testdata.json", 'w') as fp:
+path = os.path.dirname(os.path.abspath(__file__)) + r"\Testdata"
+with open(path + ".json", 'w') as fp:
     json.dump(TestData, fp, indent=4, ensure_ascii=False)
+
+#delete old SQL db if it exists:
+if os.path.isfile(path + ".db"):
+    os.remove(path + ".db")
+
 
 
 ### Create Testdata as TSV to get imported

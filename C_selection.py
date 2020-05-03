@@ -1,3 +1,5 @@
+from VT_logger import logger
+
 class C_selection:
     def __init__(self):
         self.IDs = -1 # das hier ist einfach ein zähler
@@ -7,15 +9,17 @@ class C_selection:
                         # listID 0 corresponds to mode "nach Reihenfolge"
                         # listID > 1 corresponds to additional runs through wrong answered vocables
         self.Entities = []
+        self.last_stop = None
 
     def NumbersOfEnteties(self, NumberOfEnteties):
         self.Entities.append(NumberOfEnteties)
 
-    def NextEntity(self, mode, last_stop):
+    def NextEntity(self, mode):
         #initiate correctly depending on mode
         if self.IDs == -1 and mode == "nach Reihenfolge" and len(self.Entities) == 2:
             self.listID = 0
-            self.IDs = last_stop
+            self.IDs = self.Entities[0].index(self.last_stop)
+            logger.debug("knowing that last_stop was " + str(self.last_stop))
         elif self.IDs == -1 and mode == "nach Fälligkeit" and len(self.Entities) == 2:
             self.listID = 1
             self.IDs = -1
@@ -26,3 +30,4 @@ class C_selection:
         elif self.IDs >= len(self.Entities[-1]) and mode == "nach Fälligkeit":
             print("Trying to call more Entries than exist?!")
         self.idx = self.Entities[self.listID][self.IDs]
+        logger.info("Trying to show the vocID: " + str(self.idx))
